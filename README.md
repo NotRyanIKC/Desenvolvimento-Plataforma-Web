@@ -1,40 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# ♟️ Plataforma de Xadrez Web
 
-## Getting Started
+Este é um projeto [Next.js](https://nextjs.org) inicializado com o [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app), a ser desenvolvido para o **Projeto Prático: Desenvolvimento de Plataforma Web Completa**.
 
-First, run the development server:
+## 🚀 Como Começar
+
+Primeiro, inicie o servidor de desenvolvimento no seu terminal:
 
 ```bash
 npm run dev
-# or
+# ou
 yarn dev
-# or
+# ou
 pnpm dev
-# or
+# ou
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra [http://localhost:3000](http://localhost:3000) no seu navegador para ver a aplicação a correr.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+Pode começar a editar a página principal modificando o ficheiro `src/pages/index.tsx`. A página será atualizada automaticamente no navegador conforme guarda as alterações no código.
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+### ⚙️ Rotas de API (Back-end)
+As [Rotas de API](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) de exemplo podem ser acedidas em [http://localhost:3000/api/hello](http://localhost:3000/api/hello). Este endpoint pode ser editado no ficheiro `src/pages/api/hello.ts`.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+A pasta `src/pages/api` é mapeada automaticamente para os caminhos `/api/*`. Os ficheiros dentro desta pasta são executados no lado do servidor (Node.js) e são tratados como Rotas de API em vez de páginas visíveis do React.
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 🔠 Fontes
+Este projeto utiliza a funcionalidade [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) para otimizar e carregar automaticamente a fonte [Geist](https://vercel.com/font), garantindo melhor desempenho e design.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 📚 Saiba Mais sobre o Next.js
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+Para aprender mais sobre as ferramentas que estamos a utilizar, consulte os seguintes recursos:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Documentação do Next.js](https://nextjs.org/docs) - aprenda sobre as funcionalidades e a API do Next.js.
+- [Aprenda Next.js](https://nextjs.org/learn-pages-router) - um tutorial interativo oficial do Next.js.
 
-## Deploy on Vercel
+Também pode consultar [o repositório do Next.js no GitHub](https://github.com/vercel/next.js) — comentários e contribuições para a comunidade são sempre bem-vindos!
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+## ☁️ Publicação (Deploy)
+
+A maneira mais fácil de publicar a sua aplicação Next.js e colocá-la online é utilizando a [Plataforma Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme), criada pelos mesmos programadores da framework.
+
+Consulte a [documentação de publicação do Next.js](https://nextjs.org/docs/pages/building-your-application/deploying) para mais detalhes sobre como colocar o seu projeto no ar.

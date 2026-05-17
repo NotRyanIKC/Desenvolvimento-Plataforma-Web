@@ -1,0 +1,257 @@
+/* ─── Variáveis ─────────────────────────────────────────── */
+.root {
+  --bg:       #111827;
+  --bg-card:  #1a2235;
+  --bg-card-h:#1e2a40;
+  --border:   rgba(59, 130, 246, 0.15);
+  --blue:     #3b82f6;
+  --blue-d:   #2563eb;
+  --blue-dd:  #1d4ed8;
+  --text:     #f1f5f9;
+  --muted:    #64748b;
+  --muted-l:  #94a3b8;
+
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: 'DM Sans', 'Segoe UI', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ─── Fundo ──────────────────────────────────────────────── */
+.gridBg {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Navbar ─────────────────────────────────────────────── */
+.nav {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 48px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.logoIcon {
+  font-size: 24px;
+  width: 36px;
+  height: 36px;
+  background: var(--blue-d);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoText {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.logoAccent { color: var(--blue); }
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navLink {
+  font-size: 14px;
+  color: var(--muted-l);
+  text-decoration: none;
+  padding: 7px 14px;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
+}
+.navLink:hover {
+  color: var(--text);
+  background: rgba(59,130,246,0.08);
+}
+
+.btnPrimary {
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--blue-d);
+  text-decoration: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.btnPrimary:hover { background: var(--blue-dd); }
+
+/* ─── Main ───────────────────────────────────────────────── */
+.main {
+  position: relative;
+  z-index: 10;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 64px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ─── Header ─────────────────────────────────────────────── */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.sub {
+  font-size: 15px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ─── Modos de jogo ──────────────────────────────────────── */
+.modes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modeCard {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+}
+
+.modeCard:not(.modeDisabled):hover {
+  border-color: rgba(59,130,246,0.4);
+  background: var(--bg-card-h);
+}
+
+.modeDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modeIcon {
+  font-size: 28px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.modeBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.modeTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+
+.modeDesc {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.modeArrow {
+  font-size: 18px;
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: color 0.15s, transform 0.15s;
+}
+
+.modeCard:hover .modeArrow {
+  color: var(--blue);
+  transform: translateX(3px);
+}
+
+.modeBadge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(59,130,246,0.1);
+  color: #93c5fd;
+  border: 1px solid rgba(59,130,246,0.2);
+  flex-shrink: 0;
+}
+
+/* ─── Divider ────────────────────────────────────────────── */
+.divider {
+  height: 1px;
+  background: var(--border);
+}
+
+/* ─── Hint ───────────────────────────────────────────────── */
+.hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.hint p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.btnHint {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--blue);
+  text-decoration: none;
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(59,130,246,0.3);
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.btnHint:hover {
+  background: rgba(59,130,246,0.08);
+  border-color: var(--blue);
+}
+
+/* ─── Responsivo ─────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .nav { padding: 14px 20px; }
+  .main { padding: 40px 20px; }
+  .title { font-size: 32px; }
+  .hint { flex-direction: column; align-items: flex-start; }
+}

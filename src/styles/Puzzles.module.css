@@ -1,0 +1,338 @@
+/* ─── Variáveis ─────────────────────────────────────────── */
+.root {
+  --bg:       #111827;
+  --bg-card:  #1a2235;
+  --bg-card-h:#1e2a40;
+  --border:   rgba(59, 130, 246, 0.15);
+  --blue:     #3b82f6;
+  --blue-d:   #2563eb;
+  --blue-dd:  #1d4ed8;
+  --text:     #f1f5f9;
+  --muted:    #64748b;
+  --muted-l:  #94a3b8;
+
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: 'DM Sans', 'Segoe UI', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ─── Fundo ──────────────────────────────────────────────── */
+.gridBg {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Navbar ─────────────────────────────────────────────── */
+.nav {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 48px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.logoIcon {
+  font-size: 24px;
+  width: 36px;
+  height: 36px;
+  background: var(--blue-d);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoText {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.logoAccent { color: var(--blue); }
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navLink {
+  font-size: 14px;
+  color: var(--muted-l);
+  text-decoration: none;
+  padding: 7px 14px;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
+}
+.navLink:hover {
+  color: var(--text);
+  background: rgba(59,130,246,0.08);
+}
+
+.btnPrimary {
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--blue-d);
+  text-decoration: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.btnPrimary:hover { background: var(--blue-dd); }
+
+/* ─── Main ───────────────────────────────────────────────── */
+.main {
+  position: relative;
+  z-index: 10;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 56px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ─── Header ─────────────────────────────────────────────── */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.sub {
+  font-size: 15px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ─── Fase ativa ─────────────────────────────────────────── */
+.activePhase {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  background: var(--bg-card);
+  border: 1px solid rgba(59,130,246,0.3);
+  border-radius: 16px;
+  padding: 28px 32px;
+  overflow: hidden;
+}
+
+.activeLeft {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.activeBadge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(37,99,235,0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(59,130,246,0.2);
+  width: fit-content;
+}
+
+.activeTitle {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.activeDesc {
+  font-size: 14px;
+  color: var(--muted-l);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.btnStart {
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 24px;
+  border-radius: 10px;
+  background: var(--blue-d);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  width: fit-content;
+  transition: background 0.15s, transform 0.1s;
+}
+.btnStart:hover {
+  background: var(--blue-dd);
+  transform: translateY(-1px);
+}
+
+/* Mini tabuleiro decorativo */
+.activeBoard {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  opacity: 0.6;
+}
+
+.cell { aspect-ratio: 1; }
+.cellLight { background: #c8d9f0; }
+.cellDark  { background: #2d4a7a; }
+
+/* ─── Grade de fases ─────────────────────────────────────── */
+.phasesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.phaseCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.phaseOpen {
+  background: var(--bg-card);
+  cursor: pointer;
+}
+.phaseOpen:hover {
+  border-color: rgba(59,130,246,0.4);
+  background: var(--bg-card-h);
+}
+
+.phaseLocked {
+  background: rgba(26,34,53,0.4);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.phaseNumber {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(37,99,235,0.15);
+  color: #93c5fd;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.phaseInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.phaseTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.phaseCount {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.phaseArrow {
+  font-size: 16px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.15s, transform 0.15s;
+}
+.phaseCard:hover .phaseArrow {
+  color: var(--blue);
+  transform: translateX(3px);
+}
+
+/* ─── Divider ────────────────────────────────────────────── */
+.divider {
+  height: 1px;
+  background: var(--border);
+}
+
+/* ─── Hint ───────────────────────────────────────────────── */
+.hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.hint p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.btnHint {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--blue);
+  text-decoration: none;
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(59,130,246,0.3);
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.btnHint:hover {
+  background: rgba(59,130,246,0.08);
+  border-color: var(--blue);
+}
+
+/* ─── Responsivo ─────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .nav { padding: 14px 20px; }
+  .main { padding: 36px 20px 48px; }
+  .title { font-size: 32px; }
+  .activePhase { flex-direction: column; padding: 24px 20px; }
+  .activeBoard { width: 100%; height: auto; aspect-ratio: 1; }
+  .phasesGrid { grid-template-columns: 1fr 1fr; }
+  .hint { flex-direction: column; align-items: flex-start; }
+}

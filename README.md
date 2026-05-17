@@ -23,13 +23,10 @@ Projeto desenvolvido como parte da disciplina de **Qualidade e Projeto de Softwa
 - [Funcionalidades](#-funcionalidades)
 - [Tecnologias Utilizadas](#-tecnologias-utilizadas)
 - [APIs Utilizadas](#-apis-utilizadas)
-- [Modelagem do Banco de Dados](#-modelagem-do-banco-de-dados)
 - [Pré-requisitos](#-pré-requisitos)
 - [Como Executar o Projeto](#-como-executar-o-projeto)
-- [Variáveis de Ambiente](#-variáveis-de-ambiente)
 - [Scripts Disponíveis](#-scripts-disponíveis)
 - [Estrutura do Projeto](#-estrutura-do-projeto)
-- [Arquitetura e Padrões](#-arquitetura-e-padrões)
 
 ---
 
@@ -196,45 +193,6 @@ Para evitar chamadas diretas do cliente ao Lichess (e respeitar o rate limit), o
 [Lichess API pública]
 ```
 
-### Sessão (cookie assinado)
-
-O projeto **não usa JWT nem `next-auth` no Sprint 2**. O cookie de sessão (`cesuchess_session`) é uma string `<usuarioId>.<exp>.<assinatura>`, onde `assinatura = HMAC-SHA256(payload, SESSION_SECRET)`. A implementação está em [`src/lib/session.ts`](src/lib/session.ts) e usa `crypto.timingSafeEqual` para evitar timing attacks. Em **Sprint 3** será substituído por JWT.
-
----
-
-## 🗃️ Modelagem do Banco de Dados
-
-O banco oficial chama-se **"Banco Versão 2034.0"** (identificador técnico no Postgres: `BancoVersao2034` — sem acentos/espaços para evitar problemas de encoding no Windows).
-
-A modelagem nasceu no **BRModeler** ([`DB/Cesuchess 1.0`](DB/Cesuchess%201.0)) e foi exportada para SQL com correções (chaves UNIQUE, CHECK, ON DELETE CASCADE, triggers de `atualizado_em` etc.) em [`DB/schema.sql`](DB/schema.sql).
-
-### Tabelas (10 no total)
-
-| Tabela | Papel |
-|---|---|
-| `usuario` | Raiz da hierarquia: dados de autenticação e perfil (UUID v4). |
-| `admin` | Usuários com privilégios administrativos (1:1 com `usuario`). |
-| `jogador` | Lado "competitivo" do usuário, com rating e estatísticas (1:1 com `usuario`). |
-| `bot` | Bots configuráveis para jogar contra jogadores. |
-| `partida` | Partidas entre jogadores, com `resultado` e `status`. |
-| `lance` | Lances de uma partida, em ordem (`UNIQUE (partida_id, numero)`). |
-| `puzzle` | Puzzles cadastrados internamente (espelho opcional do Lichess via `lichess_id`). |
-| `tentativa_puzzle` | Histórico fino de lances enviados por jogadores em puzzles. |
-| `progresso_puzzle` | Progresso agregado por jogador e fase. |
-| `puzzles_resolvidos` | **Tabela auxiliar do Sprint 2** — alimenta o CRUD de Histórico de Puzzles do usuário. |
-
-### Tipos enumerados
-
-`dificuldade_bot` · `resultado_partida` · `status_partida`.
-
-### Cuidados de integridade aplicados (além do BRModeler)
-
-- `UNIQUE` em `usuario(email)`, `usuario(username)`, `admin(usuario_id)`, `jogador(usuario_id)`, `puzzle(lichess_id)`.
-- `UNIQUE` composto em `lance(partida_id, numero)` e `progresso_puzzle(jogador_id, fase)`.
-- `CHECK` em `partida` proibindo o mesmo jogador nas duas cores, garantindo `encerrada_em >= iniciada_em` e exigindo coerência entre `status` e `resultado`.
-- `ON DELETE CASCADE` na cadeia `usuario → jogador → puzzles_resolvidos`.
-- Trigger `set_atualizado_em()` em `usuario`, `progresso_puzzle` e `puzzles_resolvidos`.
-
 ---
 
 ## ⚙️ Pré-requisitos
@@ -251,11 +209,8 @@ Verifique as versões com:
 ```bash
 node --version
 npm --version
-psql --version
 git --version
 ```
-
-> **Windows:** se `psql` não for reconhecido, adicione `C:\Program Files\PostgreSQL\17\bin` ao `PATH` ou use o caminho completo do executável.
 
 ---
 
@@ -274,53 +229,15 @@ cd Desenvolvimento-Plataforma-Web
 npm install
 ```
 
-### 3. Crie o banco e aplique o schema
-
-```bash
-# Cria o banco (uma única vez)
-createdb -U postgres BancoVersao2034
-
-# Aplica o schema (recria tabelas se já existirem)
-psql -U postgres -d BancoVersao2034 -f DB/schema.sql
-```
-
-**No Windows** (PowerShell), use o caminho completo do `psql`/`createdb` caso eles não estejam no PATH:
-
-```powershell
-& "C:\Program Files\PostgreSQL\17\bin\createdb.exe" -U postgres BancoVersao2034
-& "C:\Program Files\PostgreSQL\17\bin\psql.exe" -U postgres -d BancoVersao2034 -f DB\schema.sql
-```
-
-### 4. Configure as variáveis de ambiente
-
-```bash
-cp .env.local.example .env.local
-```
-
-Abra `.env.local` e ajuste a senha do `postgres` e o `SESSION_SECRET` — ver seção [Variáveis de Ambiente](#-variáveis-de-ambiente).
-
-### 5. Inicie o servidor de desenvolvimento
+### 3. Inicie o servidor de desenvolvimento
 
 ```bash
 npm run dev
 ```
 
-### 6. Abra no navegador
+### 4. Abra no navegador
 
 Acesse [http://localhost:3000](http://localhost:3000). Crie uma conta em `/routes/register` e explore o app.
-
----
-
-## 🔐 Variáveis de Ambiente
-
-O arquivo [`.env.local.example`](.env.local.example) lista as variáveis necessárias. Copie-o para `.env.local` antes de subir a aplicação.
-
-| Variável | Função |
-|---|---|
-| `DATABASE_URL` | String de conexão do PostgreSQL no formato `postgresql://usuario:senha@host:porta/banco`. Por padrão aponta para `BancoVersao2034` em `localhost:5432`. |
-| `SESSION_SECRET` | Chave usada para assinar o cookie de sessão (HMAC-SHA256). Em produção, gere com `openssl rand -hex 32` ou equivalente. Mínimo **16 caracteres**. |
-
-> Se a senha do `postgres` contiver caracteres especiais (`@`, `:`, `/`, `#`, espaço…), URL-encode antes de colocar na `DATABASE_URL`.
 
 ---
 
@@ -391,7 +308,6 @@ Desenvolvimento-Plataforma-Web/
 │   ├── styles/                  # CSS Modules + globals.css
 │   └── types/                   # Tipos compartilhados
 │       └── chess.ts
-├── .env.local.example           # Modelo das variáveis de ambiente
 ├── .gitignore
 ├── eslint.config.mjs
 ├── next.config.ts
@@ -414,21 +330,6 @@ Desenvolvimento-Plataforma-Web/
 | **`src/services`** | Camada de integração com serviços externos (atualmente: Lichess). |
 | **`src/styles`** | `globals.css` + um `*.module.css` por tela. |
 | **`src/types`** | Tipos TypeScript compartilhados. |
-
----
-
-## 🏗 Arquitetura e Padrões
-
-- **Separação de responsabilidades:** `services/` lida com APIs externas, `lib/` é a camada de domínio + infraestrutura (banco, sessão, validações), `pages/api/` apenas orquestra (lê body, valida, chama `lib/`, devolve JSON), `pages/routes/` cuida da UI.
-- **Sessão sem libs externas:** o cookie httpOnly é assinado com HMAC-SHA256 a partir do `SESSION_SECRET`, e validado em tempo constante (`crypto.timingSafeEqual`). Toda rota privada chama `getSessionUserId(req)`.
-- **Hash de senha com `bcryptjs`** (10 rounds) — senha em claro nunca cruza o limite do `lib/users.ts`.
-- **Transações no `pg`** para criação de `usuario` + `jogador` no register, garantindo que nunca exista usuário sem o lado-jogador correspondente.
-- **Componentes funcionais com Hooks:** todo o estado é gerenciado com `useState`, `useEffect` e hooks customizados em `src/hooks/`.
-- **Tipagem estrita:** `tsconfig.json` com `strict: true`; tipos compartilhados centralizados em `src/types/` e DTOs reexportados em `src/lib/apiClient.ts`.
-- **Camada de persistência sem ORM:** acesso direto via `node-postgres` em SQL puro — o pool vive em `src/lib/db.ts` e cada agregado tem seu próprio arquivo em `src/lib/`.
-- **Integração com APIs externas isolada:** chamadas ao Lichess são feitas exclusivamente em `services/lichess.ts` e expostas ao front somente via `pages/api/puzzles/[id].ts`, evitando vazar configuração ou bater no rate limit a partir do navegador.
-- **Lint contínuo:** ESLint executado durante o desenvolvimento.
-- **React Compiler:** `babel-plugin-react-compiler` ativo, aplicando memoização automática em tempo de build.
 
 ---
 

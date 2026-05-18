@@ -10,6 +10,7 @@ Projeto desenvolvido como parte da disciplina de **Qualidade e Projeto de Softwa
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Lichess API](https://img.shields.io/badge/Lichess_API-public-000000?style=for-the-badge&logo=lichess&logoColor=white)](https://lichess.org/api)
 [![ESLint](https://img.shields.io/badge/ESLint-9-4B32C3?style=for-the-badge&logo=eslint&logoColor=white)](https://eslint.org/)
 
 </div>
@@ -21,6 +22,7 @@ Projeto desenvolvido como parte da disciplina de **Qualidade e Projeto de Softwa
 - [Sobre o Projeto](#-sobre-o-projeto)
 - [Funcionalidades](#-funcionalidades)
 - [Tecnologias Utilizadas](#-tecnologias-utilizadas)
+- [APIs Utilizadas](#-apis-utilizadas)
 - [Pré-requisitos](#-pré-requisitos)
 - [Como Executar o Projeto](#-como-executar-o-projeto)
 - [Scripts Disponíveis](#-scripts-disponíveis)
@@ -48,10 +50,31 @@ O resultado é uma aplicação completa, com tabuleiro interativo, validação d
 
 ## ✨ Funcionalidades
 
+### Implementadas no Sprint 2
+
+- 👤 **Cadastro de usuário** com validação de e-mail, username, sobrenome e senha (mínimo 8 caracteres) — cria automaticamente o par `usuario` + `jogador` em uma única transação.
+- 🔐 **Login por e-mail OU username** + senha, com **sessão por cookie httpOnly assinado (HMAC-SHA256)**.
+- 🪪 **Perfil do usuário** (`/routes/profile`) com **CRUD completo**:
+  - **Read** — exibe nome, sobrenome, username, e-mail e data de criação.
+  - **Update** — edição de dados pessoais e troca de senha (exige senha atual para alterar e-mail/senha, por segurança).
+  - **Delete** — exclusão da conta, que cascateia para `jogador`, `puzzles_resolvidos` e demais agregados.
+- 📚 **Histórico de Puzzles** (`/routes/puzzles/history`) com **CRUD completo**:
+  - **Create** — registrar um puzzle resolvido (ID do Lichess, fase, rating, tentativas, anotação).
+  - **Read** — listar todos os puzzles que o usuário resolveu, mais recentes primeiro.
+  - **Update** — editar anotação, acerto e número de tentativas.
+  - **Delete** — remover um registro do histórico.
+- 🔌 **Integração com a API pública do Lichess** isolada em `src/services/lichess.ts` e exposta ao cliente apenas via proxy server-side (`/api/puzzles/[id]`).
+- 🗄️ **Persistência em PostgreSQL** com modelagem completa baseada em ferramenta CASE (BRModeler), incluindo 9 entidades do domínio + tabela auxiliar `puzzles_resolvidos`.
+
+### Em escopo do projeto, ainda em desenvolvimento
+
 - ♟️ **Tabuleiro interativo** com peças arrastáveis (drag-and-drop) renderizado pela `react-chessboard`.
-- 🧠 **Validação completa de jogadas** segundo as regras oficiais, usando a engine `chess.js` (xeque, xeque-mate, en passant, roque, promoção e empate por afogamento).
-- 🔄 **Estado da partida em tempo real**, incluindo turno, histórico de movimentos e detecção de fim de jogo.
-- 🗄️ **Persistência em PostgreSQL** para usuários, partidas e histórico de jogadas.
+- 🧠 **Validação completa de jogadas** segundo as regras oficiais, usando a engine `chess.js`.
+- 🔄 **Estado da partida em tempo real**, com turno, histórico de movimentos e detecção de fim de jogo.
+- 🤖 **Modo de jogo contra Bot** com diferentes níveis de dificuldade.
+
+### Características transversais
+
 - 🎨 **Interface responsiva** adaptada para desktop, tablet e mobile.
 - 🔒 **Tipagem ponta a ponta** com TypeScript para reduzir bugs em tempo de execução.
 - ⚡ **Renderização otimizada** com Next.js 16 e o novo React Compiler (`babel-plugin-react-compiler`).
@@ -76,13 +99,16 @@ O resultado é uma aplicação completa, com tabuleiro interativo, validação d
 |---|---|---|
 | [chess.js](https://github.com/jhlywa/chess.js) | `^1.4.0` | Engine de xadrez: validação de jogadas, estado do jogo, FEN/PGN |
 | [react-chessboard](https://github.com/Clariity/react-chessboard) | `^5.10.0` | Componente React para renderização do tabuleiro |
+| [Lichess API](https://lichess.org/api) | pública | Fonte dos puzzles (puzzle por ID e puzzle diário) |
 
-### Banco de Dados
+### Banco de Dados e Autenticação
 
 | Tecnologia | Versão | Função |
 |---|---|---|
-| [PostgreSQL](https://www.postgresql.org/) | `14+` | Banco de dados relacional para usuários, partidas e histórico de jogadas |
-| [node-postgres (`pg`)](https://node-postgres.com/) | — | Driver oficial do PostgreSQL para Node.js (acesso via SQL puro, sem ORM) |
+| [PostgreSQL](https://www.postgresql.org/) | `14+` | Banco de dados relacional para usuários, jogadores, partidas, puzzles e histórico |
+| [node-postgres (`pg`)](https://node-postgres.com/) | `^8.11.5` | Driver oficial do PostgreSQL para Node.js (acesso via SQL puro, sem ORM) |
+| [bcryptjs](https://github.com/dcodeIO/bcrypt.js) | `^2.4.3` | Hash seguro de senhas (10 rounds) |
+| `node:crypto` | nativo | HMAC-SHA256 para assinar o cookie de sessão |
 
 ### Qualidade e Ferramentas de Desenvolvimento
 
@@ -91,7 +117,82 @@ O resultado é uma aplicação completa, com tabuleiro interativo, validação d
 | [ESLint](https://eslint.org/) | `^9` | Linter para padronização do código |
 | [eslint-config-next](https://nextjs.org/docs/app/api-reference/config/eslint) | `16.2.5` | Configuração oficial do ESLint para Next.js |
 | [babel-plugin-react-compiler](https://react.dev/learn/react-compiler) | `1.0.0` | React Compiler para otimizações automáticas |
-| `@types/node`, `@types/react`, `@types/react-dom` | — | Definições de tipos |
+| `@types/node`, `@types/pg`, `@types/bcryptjs`, `@types/react`, `@types/react-dom` | — | Definições de tipos |
+
+---
+
+## 🌐 APIs Utilizadas
+
+O CesuChess consome uma **API externa** (Lichess) e expõe **API Routes internas** próprias (via Next.js) que cobrem autenticação, CRUD de usuário e CRUD de puzzles resolvidos.
+
+### API Externa — Lichess
+
+A [API pública do Lichess](https://lichess.org/api) é a fonte oficial dos puzzles do CesuChess. Toda a integração está centralizada em [`src/services/lichess.ts`](src/services/lichess.ts) — os componentes **nunca** chamam o Lichess diretamente.
+
+| Método | Endpoint | Função |
+|---|---|---|
+| `GET` | `https://lichess.org/api/puzzle/{id}` | Busca um puzzle específico pelo ID. |
+| `GET` | `https://lichess.org/api/puzzle/daily` | Busca o puzzle do dia. |
+
+**Características:**
+
+- **Autenticação:** não exige token para estes endpoints (API pública).
+- **Rate limit:** máximo de **1 requisição por segundo** por IP.
+- **Cache:** respostas são cacheadas pelo `fetch` do Next.js (`revalidate: 86400s` para puzzles por ID, `3600s` para o puzzle diário).
+- **Formato:** JSON, com os campos `game` (PGN, jogadores) e `puzzle` (rating, solução em UCI, temas, ply inicial).
+
+### API Routes Internas (Next.js)
+
+Para evitar chamadas diretas do cliente ao Lichess (e respeitar o rate limit), o projeto expõe rotas próprias sob `src/pages/api/`:
+
+#### Autenticação
+
+| Método | Endpoint | Função |
+|---|---|---|
+| `POST` | `/api/auth/register` | Cria `usuario` + `jogador` (transação) e abre sessão. |
+| `POST` | `/api/auth/login` | Autentica por e-mail OU username + senha; seta cookie. |
+| `POST` | `/api/auth/logout` | Limpa o cookie de sessão. |
+
+#### Usuário (CRUD)
+
+| Método | Endpoint | Função |
+|---|---|---|
+| `GET` | `/api/users/me` | Dados do usuário logado. |
+| `PATCH` | `/api/users/me` | Atualiza nome / sobrenome / e-mail / senha. |
+| `DELETE` | `/api/users/me` | Exclui a conta (cascateia jogador, puzzles_resolvidos…). |
+
+#### Puzzles Resolvidos (CRUD)
+
+| Método | Endpoint | Função |
+|---|---|---|
+| `GET` | `/api/puzzles/solved` | Lista os puzzles resolvidos do usuário logado. |
+| `POST` | `/api/puzzles/solved` | Registra (upsert) um puzzle como resolvido. |
+| `PATCH` | `/api/puzzles/solved/[id]` | Atualiza anotação, acerto ou tentativas. |
+| `DELETE` | `/api/puzzles/solved/[id]` | Remove um registro do histórico. |
+
+#### Proxy do Lichess
+
+| Método | Endpoint | Função |
+|---|---|---|
+| `GET` | `/api/puzzles/[id]` | Proxy para `GET /api/puzzle/{id}` do Lichess. Aceita `id = 'daily'`. |
+
+### Fluxo de uma requisição de puzzle (proxy)
+
+```
+[Cliente / React]
+       │
+       │  GET /api/puzzles/{id}
+       ▼
+[Next.js API Route]  ← src/pages/api/puzzles/[id].ts
+       │
+       │  fetchPuzzleById(id)
+       ▼
+[Camada de serviço] ← src/services/lichess.ts
+       │
+       │  GET https://lichess.org/api/puzzle/{id}
+       ▼
+[Lichess API pública]
+```
 
 ---
 
@@ -100,7 +201,7 @@ O resultado é uma aplicação completa, com tabuleiro interativo, validação d
 Antes de começar, garanta que você tem instalado em sua máquina:
 
 - **[Node.js](https://nodejs.org/en/)** — versão **18.18 ou superior** (recomendado: LTS 20+, exigido pelo Next.js 16).
-- **[PostgreSQL](https://www.postgresql.org/download/)** — versão **14 ou superior**, com o serviço em execução localmente (ou acesso a uma instância remota).
+- **[PostgreSQL](https://www.postgresql.org/download/)** — versão **14 ou superior**, com o serviço em execução localmente. **Anote a senha do superusuário `postgres`** definida na instalação — ela será usada no `.env.local`.
 - Um gerenciador de pacotes: **[npm](https://www.npmjs.com/)** (já vem com o Node), **[Yarn](https://yarnpkg.com/)** ou **[pnpm](https://pnpm.io/)**.
 - **[Git](https://git-scm.com/)** para clonar o repositório.
 
@@ -109,7 +210,6 @@ Verifique as versões com:
 ```bash
 node --version
 npm --version
-psql --version
 git --version
 ```
 
@@ -121,33 +221,24 @@ git --version
 
 ```bash
 git clone https://github.com/NotRyanIKC/Desenvolvimento-Plataforma-Web.git
-```
-
-### 2. Acesse a pasta do projeto
-
-```bash
 cd Desenvolvimento-Plataforma-Web
 ```
 
-### 3. Instale as dependências
+### 2. Instale as dependências
 
 ```bash
 npm install
-# ou
-yarn install
-# ou
-pnpm install
 ```
 
-### 4. Inicie o servidor de desenvolvimento
+### 3. Inicie o servidor de desenvolvimento
 
 ```bash
 npm run dev
 ```
 
-### 5. Abra no navegador
+### 4. Abra no navegador
 
-Acesse [http://localhost:3000](http://localhost:3000) — a página recarrega automaticamente conforme você edita os arquivos.
+Acesse [http://localhost:3000](http://localhost:3000). Crie uma conta em `/routes/register` e explore o app.
 
 ---
 
@@ -168,37 +259,78 @@ No diretório do projeto, você pode rodar:
 
 ```text
 Desenvolvimento-Plataforma-Web/
-├── src/                       # Código-fonte principal da aplicação
+├── DB/                          # Modelagem e schema do banco
+│   ├── Cesuchess 1.0            # Arquivo-fonte do BRModeler (ferramenta CASE)
+│   └── schema.sql               # Schema unificado (10 tabelas + 3 enums + triggers)
+├── Docs/                        # Documentação do projeto
+│   └── CesuChess_Casos_de_Uso.docx
+├── src/                         # Código-fonte principal da aplicação
 │   ├── components/
-│   │   └── ui/                # Componentes de UI reutilizáveis (Tabuleiro, botões, etc.)
-│   ├── data/                  # Dados estáticos e mocks (configurações iniciais, presets)
-│   ├── hooks/                 # Hooks customizados do React (ex.: useChessGame)
-│   ├── lib/                   # Bibliotecas e wrappers internos (pool do Postgres, integração com chess.js)
-│   ├── pages/                 # Rotas e API routes do Next.js (Pages Router)
-│   ├── services/              # Camada de serviços (queries SQL, regras de negócio)
-│   ├── styles/                # Estilos globais e módulos CSS
-│   └── types/                 # Definições de tipos e interfaces TypeScript
-├── .gitignore                 # Arquivos e pastas ignorados pelo Git
-├── eslint.config.mjs          # Configuração do ESLint (flat config)
-├── next.config.ts             # Configuração do Next.js
-├── package.json               # Dependências, scripts e metadados do projeto
-├── package-lock.json          # Lockfile das dependências (npm)
-├── tsconfig.json              # Configuração do compilador TypeScript
-└── README.md                  # Este arquivo
+│   │   └── ui/                  # Componentes de UI reutilizáveis
+│   │       └── ChessBoard.tsx
+│   ├── data/                    # Dados estáticos (puzzles iniciais)
+│   │   └── puzzles.ts
+│   ├── hooks/                   # Hooks customizados
+│   │   └── usePuzzles.ts
+│   ├── lib/                     # Adaptadores de infraestrutura e domínio
+│   │   ├── apiClient.ts         # Wrapper de fetch p/ chamar APIs internas
+│   │   ├── chessEngine.ts       # Integração com chess.js (applyMove)
+│   │   ├── db.ts                # Pool do node-postgres (singleton)
+│   │   ├── puzzlesResolvidos.ts # Repositório do CRUD de Puzzles Resolvidos
+│   │   ├── session.ts           # Cookie assinado HMAC-SHA256
+│   │   ├── users.ts             # Repositório do agregado usuário + jogador
+│   │   └── validation.ts        # Validadores reutilizáveis (e-mail, senha, etc.)
+│   ├── pages/                   # Rotas (Pages Router do Next.js)
+│   │   ├── _app.tsx
+│   │   ├── index.tsx
+│   │   ├── api/                 # Endpoints HTTP do back-end
+│   │   │   ├── auth/
+│   │   │   │   ├── login.ts
+│   │   │   │   ├── logout.ts
+│   │   │   │   └── register.ts
+│   │   │   ├── puzzles/
+│   │   │   │   ├── [id].ts      # Proxy do Lichess
+│   │   │   │   └── solved/
+│   │   │   │       ├── [id].ts  # PATCH / DELETE
+│   │   │   │       └── index.ts # GET / POST
+│   │   │   └── users/
+│   │   │       └── me.ts        # GET / PATCH / DELETE do próprio usuário
+│   │   └── routes/              # Páginas visíveis
+│   │       ├── login.tsx
+│   │       ├── play.tsx
+│   │       ├── profile.tsx      # Tela de perfil (CRUD do usuário)
+│   │       ├── register.tsx
+│   │       └── puzzles/
+│   │           ├── [phase].tsx
+│   │           ├── history.tsx  # Tela de histórico (CRUD de puzzles resolvidos)
+│   │           └── index.tsx
+│   ├── services/                # Integração com APIs externas
+│   │   └── lichess.ts
+│   ├── styles/                  # CSS Modules + globals.css
+│   └── types/                   # Tipos compartilhados
+│       └── chess.ts
+├── .gitignore
+├── eslint.config.mjs
+├── next.config.ts
+├── package.json
+├── package-lock.json
+├── tsconfig.json
+└── README.md
 ```
 
-### Detalhamento das pastas
+### Detalhamento das pastas principais
 
 | Pasta | Responsabilidade |
 |---|---|
-| **`components/ui`** | Componentes de interface reutilizáveis e desacoplados de regras de negócio — botões, modais, e o próprio tabuleiro de xadrez. |
-| **`data`** | Conjuntos de dados estáticos usados pela aplicação (configurações iniciais do tabuleiro, presets de jogo, listas auxiliares). |
-| **`hooks`** | Hooks customizados que encapsulam lógica reutilizável (estado da partida, controle de turnos, persistência local). |
-| **`lib`** | Adaptadores e utilidades de mais baixo nível — pool de conexão do PostgreSQL e integração com a engine `chess.js`. |
-| **`pages`** | Rotas da aplicação seguindo o **Pages Router** do Next.js. Cada arquivo `.tsx` vira uma rota; subpastas em `pages/api/` viram endpoints. |
-| **`services`** | Camada responsável pelas queries SQL e orquestração de regras de negócio do domínio. |
-| **`styles`** | Arquivos de estilo globais (`globals.css`) e módulos CSS específicos. |
-| **`types`** | Tipos e interfaces TypeScript compartilhados por toda a aplicação. |
+| **`DB/`** | Modelagem visual (BRModeler) e script `schema.sql` aplicado no Postgres. |
+| **`src/components/ui`** | Componentes de interface reutilizáveis (tabuleiro, botões). |
+| **`src/data`** | Dados estáticos / mocks (será reduzido conforme as fontes reais são plugadas). |
+| **`src/hooks`** | Hooks customizados encapsulando lógica reutilizável. |
+| **`src/lib`** | Camada de infraestrutura e domínio: pool do banco, sessão, hash, validações, repositórios e wrapper de fetch. |
+| **`src/pages`** | Rotas da aplicação (Pages Router). Arquivos em `pages/api/` viram endpoints HTTP; arquivos em `pages/routes/` viram telas. |
+| **`src/services`** | Camada de integração com serviços externos (atualmente: Lichess). |
+| **`src/styles`** | `globals.css` + um `*.module.css` por tela. |
+| **`src/types`** | Tipos TypeScript compartilhados. |
 
 ---
 
@@ -207,7 +339,7 @@ Desenvolvimento-Plataforma-Web/
 - **Separação de responsabilidades:** a lógica de xadrez (regras, estado, validação) é encapsulada em `lib/`, `hooks/` e na biblioteca `chess.js`; os componentes em `components/ui` cuidam apenas da apresentação e interação.
 - **Componentes funcionais com Hooks:** todo o estado é gerenciado com `useState`, `useEffect` e hooks customizados centralizados em `hooks/`.
 - **Tipagem estrita:** o `tsconfig.json` está configurado para máxima segurança (`strict: true`), com todos os tipos compartilhados centralizados em `types/`.
-- **Camada de persistência:** o acesso ao PostgreSQL é feito via `node-postgres` com SQL puro — o pool de conexões vive em `lib/` e as queries ficam em `services/`, mantendo a separação entre infraestrutura e regras de negócio.
+- **Camada de persistência:** o acesso ao PostgreSQL é feito via `node-postgres` com SQL puro — o pool de conexões vive em `lib/` e as queries ficam em `lib/` (repositórios), mantendo a separação entre infraestrutura e regras de negócio.
 - **Lint contínuo:** o ESLint é executado durante o desenvolvimento e antes dos commits para manter a base de código consistente.
 - **React Compiler:** com o `babel-plugin-react-compiler` ativo, otimizações como memoização automática são aplicadas em tempo de build, simplificando o código de aplicação.
 

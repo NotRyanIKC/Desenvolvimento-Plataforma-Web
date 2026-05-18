@@ -1,16 +1,47 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import styles from '@/styles/Login.module.css';
+import { api, ApiError, type PublicUser } from '@/lib/apiClient';
 
 export default function Login() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [identifier, setIdentifier] = useState('');
+  const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErro(null);
+
+    if (!identifier.trim() || !senha) {
+      setErro('Preencha e-mail/usuário e senha.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await api.post<{ user: PublicUser }>('/api/auth/login', {
+        identifier: identifier.trim(),
+        senha,
+      });
+      router.push('/routes/profile');
+    } catch (err) {
+      setErro(
+        err instanceof ApiError ? err.message : 'Falha inesperada no login.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className={styles.root}>
       <div className={styles.gridBg} aria-hidden="true" />
 
       <div className={styles.wrapper}>
-        {/* Painel esquerdo — decorativo */}
         <div className={styles.side} aria-hidden="true">
           <div className={styles.sideContent}>
             <div className={styles.sideLogo}>
@@ -20,7 +51,7 @@ export default function Login() {
               </span>
             </div>
             <p className={styles.sideQuote}>
-              "O xadrez é a ginástica da mente."
+              &quot;O xadrez é a ginástica da mente.&quot;
             </p>
             <span className={styles.sideQuoteAuthor}>— Blaise Pascal</span>
 
@@ -40,7 +71,6 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Formulário */}
         <div className={styles.formPanel}>
           <div className={styles.formHeader}>
             <Link href="/" className={styles.back}>
@@ -55,7 +85,7 @@ export default function Login() {
             </p>
           </div>
 
-          <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
+          <form className={styles.form} onSubmit={onSubmit} noValidate>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="identifier">
                 E-mail ou nome de usuário
@@ -66,6 +96,9 @@ export default function Login() {
                 className={styles.input}
                 placeholder="joao@exemplo.com"
                 autoComplete="username"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                disabled={loading}
               />
             </div>
 
@@ -83,6 +116,9 @@ export default function Login() {
                   className={styles.input}
                   placeholder="Sua senha"
                   autoComplete="current-password"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  disabled={loading}
                 />
                 <button
                   type="button"
@@ -102,8 +138,18 @@ export default function Login() {
               </label>
             </div>
 
-            <button type="submit" className={styles.btnSubmit}>
-              Entrar
+            {erro && (
+              <p role="alert" style={{ color: '#ff6b6b', marginTop: 4 }}>
+                {erro}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className={styles.btnSubmit}
+              disabled={loading}
+            >
+              {loading ? 'Entrando…' : 'Entrar'}
             </button>
           </form>
         </div>

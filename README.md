@@ -51,8 +51,6 @@ O resultado é uma aplicação completa, com tabuleiro interativo, validação d
 
 ## ✨ Funcionalidades
 
-### Implementadas no Sprint 2
-
 - 👤 **Cadastro de usuário** com validação de e-mail, username, sobrenome e senha (mínimo 8 caracteres) — cria automaticamente o par `usuario` + `jogador` em uma única transação.
 - 🔐 **Login por e-mail OU username** + senha, com **sessão por cookie httpOnly assinado (HMAC-SHA256)**.
 - 🪪 **Perfil do usuário** (`/routes/profile`) com **CRUD completo**:
@@ -340,7 +338,8 @@ Desenvolvimento-Plataforma-Web/
 ├── DB/                          # Modelagem e schema do banco
 │   ├── Cesuchess 1.0            # Arquivo-fonte do BRModeler (ferramenta CASE)
 │   └── schema.sql               # Schema unificado (10 tabelas + 3 enums + triggers)
-├── Docs/                        # Documentação do projeto
+├── Docs/
+│   ├── CesuChess_Casos_de_Teste.docx     
 │   └── CesuChess_Casos_de_Uso.docx
 ├── src/                         # Código-fonte principal da aplicação
 │   ├── components/

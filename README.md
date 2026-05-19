@@ -26,6 +26,7 @@ Projeto desenvolvido como parte da disciplina de **Qualidade e Projeto de Softwa
 - [Pré-requisitos](#-pré-requisitos)
 - [Como Executar o Projeto](#-como-executar-o-projeto)
 - [Scripts Disponíveis](#-scripts-disponíveis)
+- [Testes](#-testes)
 - [Estrutura do Projeto](#-estrutura-do-projeto)
 - [Arquitetura e Padrões](#-arquitetura-e-padrões)
 
@@ -116,6 +117,7 @@ O resultado é uma aplicação completa, com tabuleiro interativo, validação d
 |---|---|---|
 | [ESLint](https://eslint.org/) | `^9` | Linter para padronização do código |
 | [eslint-config-next](https://nextjs.org/docs/app/api-reference/config/eslint) | `16.2.5` | Configuração oficial do ESLint para Next.js |
+| [Vitest](https://vitest.dev/) | `^4.1.6` | Runner de testes unitários e de integração (TypeScript nativo, API estilo Jest) |
 | [babel-plugin-react-compiler](https://react.dev/learn/react-compiler) | `1.0.0` | React Compiler para otimizações automáticas |
 | `@types/node`, `@types/pg`, `@types/bcryptjs`, `@types/react`, `@types/react-dom` | — | Definições de tipos |
 
@@ -230,13 +232,49 @@ cd Desenvolvimento-Plataforma-Web
 npm install
 ```
 
-### 3. Inicie o servidor de desenvolvimento
+### 3. Crie o banco de dados e aplique o schema
+
+Com o serviço do PostgreSQL em execução, crie o banco `cesuchess` e rode o `schema.sql`:
+
+```bash
+# Linux / macOS
+createdb -U postgres cesuchess
+psql -U postgres -d cesuchess -f DB/schema.sql
+```
+
+```bash
+# Windows (PowerShell, com o psql no PATH)
+psql -U postgres -c "CREATE DATABASE cesuchess;"
+psql -U postgres -d cesuchess -f DB/schema.sql
+```
+
+O `schema.sql` cria as 10 tabelas (`usuario`, `jogador`, `admin`, `bot`, `partida`, `lance`, `puzzle`, `tentativa_puzzle`, `progresso_puzzle`, `puzzles_resolvidos`), 3 enums e os triggers necessários.
+
+### 4. Configure as variáveis de ambiente
+
+Crie um arquivo `.env.local` **na raiz do projeto** com as duas variáveis abaixo:
+
+```bash
+# .env.local
+DATABASE_URL=postgres://postgres:SUA_SENHA@localhost:5432/cesuchess
+SESSION_SECRET=uma_string_aleatoria_com_pelo_menos_16_caracteres
+```
+
+- **`DATABASE_URL`** — string de conexão do `node-postgres`. Substitua `SUA_SENHA` pela senha do superusuário `postgres`.
+- **`SESSION_SECRET`** — chave usada para assinar o cookie de sessão (HMAC-SHA256). Gere uma aleatória com:
+  ```bash
+  openssl rand -hex 32
+  ```
+
+> ⚠️ O `.env.local` é ignorado pelo Git (`.gitignore`) e **não deve ser commitado**. Ao clonar o projeto em uma nova máquina, recrie-o seguindo este passo.
+
+### 5. Inicie o servidor de desenvolvimento
 
 ```bash
 npm run dev
 ```
 
-### 4. Abra no navegador
+### 6. Abra no navegador
 
 Acesse [http://localhost:3000](http://localhost:3000). Crie uma conta em `/routes/register` e explore o app.
 
@@ -252,6 +290,46 @@ No diretório do projeto, você pode rodar:
 | `npm run build` | Gera o build de produção otimizado em `.next/`. |
 | `npm run start` | Inicia o servidor com a build de produção (executar `build` antes). |
 | `npm run lint` | Executa o ESLint em todos os arquivos do projeto. |
+| `npm test` | Executa o Vitest em modo *watch* (reexecuta os testes a cada alteração). |
+| `npm run test:run` | Executa toda a suíte de testes uma única vez (útil para CI). |
+
+---
+
+## 🧪 Testes
+
+O CesuChess usa **[Vitest](https://vitest.dev/)** como runner único de testes — mesma API estilo Jest (`describe` / `test` / `expect`), porém com suporte nativo a TypeScript e execução muito mais rápida via Vite. Não há configuração extra: o Vitest descobre automaticamente arquivos `*.test.ts` em todo o projeto.
+
+### Organização
+
+A suíte é dividida em duas camadas, posicionadas conforme a natureza do teste:
+
+| Camada | Local | Objetivo |
+|---|---|---|
+| **Unitários** | `src/lib/*.test.ts` | Validar funções puras da camada de domínio/infra (ex.: validação de e-mail, senha, username) — co-localizados ao código testado. |
+| **Integração** | `tests/integration/*.test.ts` | Validar fluxos que cruzam fronteiras (serviços externos, banco, proxies). Isolados em `tests/` para serem rodados separadamente se necessário. |
+
+### Cobertura atual (Sprint 2)
+
+- **`src/lib/validation.test.ts`** — 16 casos cobrindo `validateEmail`, `validateSenha`, `validateNome`, `validateSobrenome`, `validateUsername` e `firstError`.
+- **`tests/integration/puzzles.test.ts`** — smoke test do proxy do Lichess via `fetchPuzzleById('daily')`, com fallback gracioso para rate limit.
+
+### Como rodar
+
+```bash
+# modo watch (re-executa ao salvar)
+npm test
+
+# uma única passada (CI, pré-commit)
+npm run test:run
+```
+
+Saída esperada na suíte atual: **2 arquivos, 17 testes, todos passando**.
+
+### Convenções
+
+- **Co-localização para unitários**: arquivos `*.test.ts` ao lado do módulo testado (ex.: `validation.ts` ↔ `validation.test.ts`). Facilita encontrar e manter os testes junto com o código.
+- **Pasta dedicada para integração**: `tests/integration/` agrupa testes que dependem de I/O externo (rede, banco, sistema de arquivos), tornando explícito o que não é puro.
+- **Sem mocks de banco em testes unitários**: funções que tocam o PostgreSQL são testadas via integração contra um banco real configurado em `.env.local`, evitando divergência entre mock e produção.
 
 ---
 
@@ -308,11 +386,12 @@ Desenvolvimento-Plataforma-Web/
 │   ├── services/                # Integração com APIs externas
 │   │   └── lichess.ts
 │   ├── styles/                  # CSS Modules + globals.css
-│   ├── types/                   # Tipos compartilhados
-│   │   └── chess.ts
-│   └── test                     # Suíte de testes automatizados do sistema  
-│       └──integration           # Testes de integração de serviços e infraestrutura
-│          └──puzzles.test.ts    # Teste de integração com o proxy da API do Lichess
+│   └── types/                   # Tipos compartilhados
+│       └── chess.ts
+├── tests/                       # Suíte de testes automatizados do sistema
+│   └── integration/             # Testes de integração de serviços e infraestrutura
+│       └── puzzles.test.ts      # Teste de integração com o proxy da API do Lichess
+├── .env.local                   # (criado por você) DATABASE_URL + SESSION_SECRET — não versionado
 ├── .gitignore
 ├── eslint.config.mjs
 ├── next.config.ts
@@ -335,6 +414,7 @@ Desenvolvimento-Plataforma-Web/
 | **`src/services`** | Camada de integração com serviços externos (atualmente: Lichess). |
 | **`src/styles`** | `globals.css` + um `*.module.css` por tela. |
 | **`src/types`** | Tipos TypeScript compartilhados. |
+| **`tests/`** | Testes de integração (Vitest). Unitários ficam co-localizados em `src/lib/*.test.ts`. |
 
 ---
 

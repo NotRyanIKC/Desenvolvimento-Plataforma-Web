@@ -355,8 +355,7 @@ Desenvolvimento-Plataforma-Web/
 │   │   ├── db.ts                # Pool do node-postgres (singleton)
 │   │   ├── puzzlesResolvidos.ts # Repositório do CRUD de Puzzles Resolvidos
 │   │   ├── session.ts           # Cookie assinado HMAC-SHA256
-│   │   ├── users.ts             # Repositório do agregado usuário + jogador
-│   │   ├── validation.test.ts   # Testes unitários da camada de validação    
+│   │   ├── users.ts             # Repositório do agregado usuário + jogador  
 │   │   └── validation.ts        # Validadores reutilizáveis (e-mail, senha, etc.)
 │   ├── pages/                   # Rotas (Pages Router do Next.js)
 │   │   ├── _app.tsx
@@ -388,8 +387,9 @@ Desenvolvimento-Plataforma-Web/
 │   └── types/                   # Tipos compartilhados
 │       └── chess.ts
 ├── tests/                       # Suíte de testes automatizados do sistema
-│   └── integration/             # Testes de integração de serviços e infraestrutura
-│       └── puzzles.test.ts      # Teste de integração com o proxy da API do Lichess
+│   ├── integration/             # Testes de integração de serviços e infraestrutura
+│   │    └── puzzles.test.ts      # Teste de integração com o proxy da API do Lichess
+│   └── unit.test.ts   # Testes unitários da camada de validação  
 ├── .env.local                   # (criado por você) DATABASE_URL + SESSION_SECRET — não versionado
 ├── .gitignore
 ├── eslint.config.mjs

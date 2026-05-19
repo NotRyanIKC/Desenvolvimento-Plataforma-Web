@@ -279,6 +279,7 @@ Desenvolvimento-Plataforma-Web/
 │   │   ├── puzzlesResolvidos.ts # Repositório do CRUD de Puzzles Resolvidos
 │   │   ├── session.ts           # Cookie assinado HMAC-SHA256
 │   │   ├── users.ts             # Repositório do agregado usuário + jogador
+│   │   ├── validation.test.ts   # Testes unitários da camada de validação    
 │   │   └── validation.ts        # Validadores reutilizáveis (e-mail, senha, etc.)
 │   ├── pages/                   # Rotas (Pages Router do Next.js)
 │   │   ├── _app.tsx
@@ -307,8 +308,11 @@ Desenvolvimento-Plataforma-Web/
 │   ├── services/                # Integração com APIs externas
 │   │   └── lichess.ts
 │   ├── styles/                  # CSS Modules + globals.css
-│   └── types/                   # Tipos compartilhados
-│       └── chess.ts
+│   ├── types/                   # Tipos compartilhados
+│   │   └── chess.ts
+│   └── test                     # Suíte de testes automatizados do sistema  
+│       └──integration           # Testes de integração de serviços e infraestrutura
+│          └──puzzles.test.ts    # Teste de integração com o proxy da API do Lichess
 ├── .gitignore
 ├── eslint.config.mjs
 ├── next.config.ts

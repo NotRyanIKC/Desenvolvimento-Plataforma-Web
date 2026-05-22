@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ChessBoard from '@/components/ui/ChessBoard';
@@ -7,16 +6,10 @@ import styles from '@/styles/PuzzlePhase.module.css';
 
 export default function PuzzlePhase() {
   const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!router.isReady || !isClient) return null;
-
   const phase = Number(router.query.phase);
-  const { puzzle, notFound } = usePuzzle(phase);
+  const { puzzle, notFound } = usePuzzle(Number.isFinite(phase) ? phase : 0);
+
+  if (!router.isReady) return null;
 
   if (notFound) {
     return (
@@ -42,8 +35,7 @@ export default function PuzzlePhase() {
 
   if (!puzzle) return null;
 
-  console.log('FEN:', puzzle.fen);
-  console.log('puzzle:', puzzle);
+  const turno = puzzle.fen.split(' ')[1] === 'w' ? 'claras' : 'escuras';
 
   return (
     <div className={styles.root}>
@@ -87,7 +79,7 @@ export default function PuzzlePhase() {
 
           <div className={styles.instructionCard}>
             <p className={styles.instructionText}>
-              Encontre o melhor lance para as peças escuras.
+              Encontre o melhor lance para as peças {turno}.
             </p>
           </div>
 

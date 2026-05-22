@@ -47,7 +47,7 @@ export interface LichessPuzzleResponse {
 export async function fetchPuzzleById(
   id: string
 ): Promise<LichessPuzzleResponse> {
-  const res = await fetch(`${LICHESS_BASE}/puzzle/${id}`, {
+  const res = await fetch(`${LICHESS_BASE}/puzzle/${encodeURIComponent(id)}`, {
     headers: { Accept: 'application/json' },
     next: { revalidate: 86400 }, // cache de 24h (Next.js fetch cache)
   });

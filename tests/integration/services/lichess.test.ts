@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { fetchPuzzleById } from '../../src/services/lichess'; // Importação voltando os níveis corretos para a pasta src
+import { fetchPuzzleById } from '../../../src/services/lichess';
 
 describe('🔄 Testes de Integração - Proxy de Serviços Externos', () => {
 
@@ -7,7 +7,7 @@ describe('🔄 Testes de Integração - Proxy de Serviços Externos', () => {
     try {
       // Usando o identificador estático aceito pela sua rota proxy
       const dadosPuzzle = await fetchPuzzleById('daily');
-      
+
       expect(dadosPuzzle).toBeDefined();
       // Valida se a resposta mapeia os objetos estruturados originais descritos no seu escopo
       expect(dadosPuzzle).toHaveProperty('puzzle');

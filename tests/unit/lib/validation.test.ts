@@ -6,7 +6,7 @@ import {
   validateSobrenome,
   validateUsername,
   firstError,
-} from '../src/lib/validation';
+} from '../../../src/lib/validation';
 
 describe('🧪 Testes Unitários - Validação de Credenciais (Camada lib)', () => {
 

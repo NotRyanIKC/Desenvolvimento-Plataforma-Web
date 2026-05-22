@@ -303,13 +303,13 @@ A suíte é dividida em duas camadas, posicionadas conforme a natureza do teste:
 
 | Camada | Local | Objetivo |
 |---|---|---|
-| **Unitários** | `src/lib/*.test.ts` | Validar funções puras da camada de domínio/infra (ex.: validação de e-mail, senha, username) — co-localizados ao código testado. |
-| **Integração** | `tests/integration/*.test.ts` | Validar fluxos que cruzam fronteiras (serviços externos, banco, proxies). Isolados em `tests/` para serem rodados separadamente se necessário. |
+| **Unitários** | `tests/unit/**/*.test.ts` | Validar funções puras da camada de domínio/infra (ex.: validação de e-mail, senha, username). A árvore dentro de `tests/unit/` espelha a árvore dentro de `src/`. |
+| **Integração** | `tests/integration/**/*.test.ts` | Validar fluxos que cruzam fronteiras (serviços externos, banco, proxies). A árvore dentro de `tests/integration/` espelha a árvore dentro de `src/`. |
 
 ### Cobertura atual (Sprint 2)
 
-- **`src/lib/validation.test.ts`** — 16 casos cobrindo `validateEmail`, `validateSenha`, `validateNome`, `validateSobrenome`, `validateUsername` e `firstError`.
-- **`tests/integration/puzzles.test.ts`** — smoke test do proxy do Lichess via `fetchPuzzleById('daily')`, com fallback gracioso para rate limit.
+- **`tests/unit/lib/validation.test.ts`** — 16 casos cobrindo `validateEmail`, `validateSenha`, `validateNome`, `validateSobrenome`, `validateUsername` e `firstError`.
+- **`tests/integration/services/lichess.test.ts`** — smoke test do proxy do Lichess via `fetchPuzzleById('daily')`, com fallback gracioso para rate limit.
 
 ### Como rodar
 
@@ -325,7 +325,7 @@ Saída esperada na suíte atual: **2 arquivos, 17 testes, todos passando**.
 
 ### Convenções
 
-- **Co-localização para unitários**: arquivos `*.test.ts` ao lado do módulo testado (ex.: `validation.ts` ↔ `validation.test.ts`). Facilita encontrar e manter os testes junto com o código.
+- **Suíte centralizada em `tests/`**: nenhum `*.test.ts` mora junto ao código de produção. Unitários ficam em `tests/unit/<caminho-do-módulo>.test.ts` e integração em `tests/integration/<caminho-do-módulo>.test.ts`, espelhando a árvore de `src/`. Isso mantém o código de produção limpo e deixa óbvio o que é puro vs. o que cruza fronteiras.
 - **Pasta dedicada para integração**: `tests/integration/` agrupa testes que dependem de I/O externo (rede, banco, sistema de arquivos), tornando explícito o que não é puro.
 - **Sem mocks de banco em testes unitários**: funções que tocam o PostgreSQL são testadas via integração contra um banco real configurado em `.env.local`, evitando divergência entre mock e produção.
 
@@ -387,9 +387,12 @@ Desenvolvimento-Plataforma-Web/
 │   └── types/                   # Tipos compartilhados
 │       └── chess.ts
 ├── tests/                       # Suíte de testes automatizados do sistema
-│   ├── integration/             # Testes de integração de serviços e infraestrutura
-│   │    └── puzzles.test.ts      # Teste de integração com o proxy da API do Lichess
-│   └── unit.test.ts   # Testes unitários da camada de validação  
+│   ├── integration/             # Testes de integração (cruzam fronteiras externas)
+│   │   └── services/
+│   │       └── lichess.test.ts  # Smoke test do proxy da API do Lichess
+│   └── unit/                    # Testes unitários (funções puras)
+│       └── lib/
+│           └── validation.test.ts  # Testes da camada de validação
 ├── .env.local                   # (criado por você) DATABASE_URL + SESSION_SECRET — não versionado
 ├── .gitignore
 ├── eslint.config.mjs
@@ -413,7 +416,7 @@ Desenvolvimento-Plataforma-Web/
 | **`src/services`** | Camada de integração com serviços externos (atualmente: Lichess). |
 | **`src/styles`** | `globals.css` + um `*.module.css` por tela. |
 | **`src/types`** | Tipos TypeScript compartilhados. |
-| **`tests/`** | Testes de integração (Vitest). Unitários ficam co-localizados em `src/lib/*.test.ts`. |
+| **`tests/`** | Toda a suíte de testes (Vitest). Subdividida em `tests/unit/` (funções puras) e `tests/integration/` (serviços externos, banco, proxies); ambas espelham a árvore de `src/`. |
 
 ---
 

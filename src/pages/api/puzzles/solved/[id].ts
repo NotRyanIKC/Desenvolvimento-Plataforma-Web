@@ -13,11 +13,9 @@ import {
   toDTO,
   updateResolvido,
 } from '@/lib/puzzlesResolvidos';
+import { withRequestLog } from '@/lib/withRequestLog';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   const usuarioId = getSessionUserId(req);
   if (!usuarioId) return res.status(401).json({ error: 'Não autenticado.' });
 
@@ -76,3 +74,5 @@ export default async function handler(
     return res.status(500).json({ error: 'Erro interno do servidor.' });
   }
 }
+
+export default withRequestLog(handler);

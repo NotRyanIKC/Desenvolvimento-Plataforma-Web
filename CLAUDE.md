@@ -69,15 +69,6 @@ Passwords: bcryptjs, 10 rounds (`lib/users.ts`).
 - Catch Postgres unique-violation `err.code === '23505'` and return `409`.
 - Validators in `lib/validation.ts` return `null` when valid or an error string; compose with `firstError(...)` and return the first non-null as a `400`.
 - Mutations that change email/password require re-supplying `senhaAtual` (verified before applying).
-- Write the handler as a plain `async function handler(req, res)` and export it wrapped: `export default withRequestLog(handler)` (`lib/withRequestLog.ts`). Keep this for every new route — it's what logs the request (see Request logging). The lone exception is `api/_internal/log.ts`.
-
-### Request logging
-All requests are logged to `logs/requests.log` (JSON-lines, **metadata only — never request/response bodies**, so login/register passwords are never written). `logs/` is git-ignored. Two layers, both writing via `lib/requestLogger.ts`:
-- **API routes** — the `withRequestLog` wrapper records method, path, status, durationMs, `usuarioId`, ip, userAgent.
-- **Page navigations** — `src/proxy.ts` handles them. This is Next 16's `proxy` convention (the rename of the deprecated `middleware`); it **must live in `src/`** because the project uses a `src/` dir, and it runs on the Edge runtime (no filesystem). So it forwards metadata via `event.waitUntil(fetch(...))` to the Node route `POST /api/_internal/log`, which does the actual file write. That internal route is intentionally **not** wrapped with `withRequestLog` (would self-log every page). Full call-site inventory: `Docs/Chamadas_de_API.md`.
-
-### Admin mode
-Admin status = a row in the `admin` table (1:1 with `usuario`) — there is no role column. `lib/admin.ts` exposes `isAdmin`, `findAdminIdByUsuarioId`, and the guard `requireAdmin(req)` → `{ ok: true, usuarioId, adminId } | { ok: false, status: 401 | 403 }` (401 = no session, 403 = logged-in non-admin). Admin endpoints live under `/api/admin/` (`users` list, `puzzles` create, `bots` create), call `requireAdmin` first, and use the returned `adminId` for `bot.criado_por_id` / `puzzle.adicionado_por_id`. `isAdmin` is included in the `/api/users/me` and `/api/auth/login` responses (`MeResponse` in `apiClient.ts`). Client pages under `routes/administracao/` guard with the `useAdmin` hook (redirects 401→login, non-admin→profile). There is **no app-level promotion**: make an admin by running `DB/admin_seed.sql` against the DB.
 
 ### Other notes
 - Path alias `@/*` → `src/*`.

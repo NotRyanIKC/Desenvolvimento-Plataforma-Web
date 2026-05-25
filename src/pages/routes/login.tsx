@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import styles from '@/styles/Login.module.css';
-import { api, ApiError, type MeResponse } from '@/lib/apiClient';
+import { api, ApiError, type PublicUser } from '@/lib/apiClient';
 
 export default function Login() {
   const router = useRouter();
@@ -23,11 +23,11 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const { isAdmin } = await api.post<MeResponse>('/api/auth/login', {
+      await api.post<{ user: PublicUser }>('/api/auth/login', {
         identifier: identifier.trim(),
         senha,
       });
-      router.push(isAdmin ? '/routes/administracao' : '/routes/profile');
+      router.push('/routes/profile');
     } catch (err) {
       setErro(
         err instanceof ApiError ? err.message : 'Falha inesperada no login.'

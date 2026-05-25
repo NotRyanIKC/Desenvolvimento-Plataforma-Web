@@ -58,15 +58,6 @@ export function toPublicUser(row: UsuarioRow): PublicUser {
   };
 }
 
-/** Visão administrativa de um usuário — inclui o flag `ativo`. */
-export interface AdminUser extends PublicUser {
-  ativo: boolean;
-}
-
-export function toAdminUser(row: UsuarioRow): AdminUser {
-  return { ...toPublicUser(row), ativo: row.ativo };
-}
-
 const BCRYPT_ROUNDS = 10;
 
 export async function hashSenha(senhaPlana: string): Promise<string> {
@@ -98,17 +89,6 @@ export async function findByEmailOrUsername(
     [identifier.toLowerCase()]
   );
   return rows[0] ?? null;
-}
-
-/**
- * Lista todos os usuários (uso administrativo — tela "Listar Usuários").
- * Mais recentes primeiro.
- */
-export async function listAllUsers(): Promise<UsuarioRow[]> {
-  const { rows } = await query<UsuarioRow>(
-    'SELECT * FROM usuario ORDER BY criado_em DESC'
-  );
-  return rows;
 }
 
 /**

@@ -13,9 +13,6 @@
 # testing
 /coverage
 
-# logs de requisição (sistema de log)
-/logs
-
 # next.js
 /.next/
 /out/

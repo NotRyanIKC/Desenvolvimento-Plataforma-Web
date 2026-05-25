@@ -77,14 +77,3 @@ export interface PuzzleResolvido {
   resolvidoEm: string;
   atualizadoEm: string;
 }
-
-/** Resposta de /api/users/me e /api/auth/login. */
-export interface MeResponse {
-  user: PublicUser;
-  isAdmin: boolean;
-}
-
-/** Usuário na visão administrativa (/api/admin/users). */
-export interface AdminUser extends PublicUser {
-  ativo: boolean;
-}

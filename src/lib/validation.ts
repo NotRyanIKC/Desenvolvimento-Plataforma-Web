@@ -46,53 +46,6 @@ export function validateSenha(senha: unknown): string | null {
   return null;
 }
 
-/* ─── Validações administrativas (puzzles e bots) ────────── */
-
-const NIVEIS_DIFICULDADE = ['facil', 'medio', 'dificil'];
-
-export function validateFen(fen: unknown): string | null {
-  if (typeof fen !== 'string') return 'FEN inválido.';
-  const trimmed = fen.trim();
-  if (trimmed.length < 10) return 'FEN muito curto.';
-  if (trimmed.length > 100) return 'FEN muito longo.';
-  return null;
-}
-
-export function validateSolucao(solucao: unknown): string | null {
-  if (!Array.isArray(solucao) || solucao.length === 0)
-    return 'Solução deve ter ao menos um lance.';
-  if (!solucao.every((m) => typeof m === 'string' && m.trim().length > 0))
-    return 'Cada lance da solução deve ser um texto não vazio (UCI).';
-  return null;
-}
-
-export function validateFase(fase: unknown): string | null {
-  if (typeof fase !== 'number' || !Number.isInteger(fase) || fase < 1)
-    return 'Fase deve ser um inteiro maior ou igual a 1.';
-  return null;
-}
-
-export function validateRating(rating: unknown): string | null {
-  if (typeof rating !== 'number' || !Number.isFinite(rating))
-    return 'Rating inválido.';
-  if (rating < 0 || rating > 4000) return 'Rating deve estar entre 0 e 4000.';
-  return null;
-}
-
-export function validateBotNome(nome: unknown): string | null {
-  if (typeof nome !== 'string') return 'Nome do bot inválido.';
-  const trimmed = nome.trim();
-  if (trimmed.length < 2) return 'Nome do bot deve ter no mínimo 2 caracteres.';
-  if (trimmed.length > 60) return 'Nome do bot deve ter no máximo 60 caracteres.';
-  return null;
-}
-
-export function validateNivelDificuldade(nivel: unknown): string | null {
-  if (typeof nivel !== 'string' || !NIVEIS_DIFICULDADE.includes(nivel))
-    return "Nível deve ser 'facil', 'medio' ou 'dificil'.";
-  return null;
-}
-
 /**
  * Roda uma sequência de validações e devolve o primeiro erro encontrado,
  * ou null se todas passarem.

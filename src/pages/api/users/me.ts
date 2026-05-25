@@ -28,10 +28,11 @@ import {
   validateSenha,
   validateSobrenome,
 } from '@/lib/validation';
-import { withRequestLog } from '@/lib/withRequestLog';
-import { isAdmin } from '@/lib/admin';
 
-async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const usuarioId = getSessionUserId(req);
   if (!usuarioId) {
     return res.status(401).json({ error: 'Não autenticado.' });
@@ -41,8 +42,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'GET') {
       const user = await findById(usuarioId);
       if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
-      const admin = await isAdmin(usuarioId);
-      return res.status(200).json({ user: toPublicUser(user), isAdmin: admin });
+      return res.status(200).json({ user: toPublicUser(user) });
     }
 
     if (req.method === 'PATCH') {
@@ -110,5 +110,3 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(500).json({ error: 'Erro interno do servidor.' });
   }
 }
-
-export default withRequestLog(handler);

@@ -278,49 +278,6 @@ Acesse [http://localhost:3000](http://localhost:3000). Crie uma conta em `/route
 
 ---
 
-## 🛡 Modo Administrador
-
-Um usuário é administrador quando existe uma linha em `admin` (1:1 com `usuario`)
-apontando para ele. **Não há promoção pela aplicação** — por segurança, ela é
-feita manualmente no banco:
-
-1. Cadastre um usuário normal pela UI (`/routes/register`).
-2. Promova-o a admin rodando o script `DB/admin_seed.sql` (troque o e-mail):
-   ```bash
-   psql -U postgres -d cesuchess -f DB/admin_seed.sql
-   ```
-
-Ao logar, um admin é levado a **`/routes/administracao`** (e o link "Administração"
-aparece no menu do perfil). A página reúne três ferramentas:
-
-- **Listar Usuários** — `GET /api/admin/users`
-- **Criar Puzzles** — `POST /api/admin/puzzles` (catálogo `puzzle`)
-- **Criar Bots** — `POST /api/admin/bots` (tabela `bot`)
-
-As rotas `/api/admin/*` respondem **401** sem sessão e **403** para sessões que
-não sejam de admin (guard `requireAdmin` em `src/lib/admin.ts`).
-
----
-
-## 📒 Sistema de Log de Requisições
-
-Toda requisição (navegação de páginas **e** chamadas de API) é registrada em
-`logs/requests.log`, uma linha JSON por requisição:
-
-- **Páginas:** `src/proxy.ts` (convenção "proxy" do Next 16) intercepta a
-  navegação no Edge e encaminha os metadados para `POST /api/_internal/log`,
-  que grava o arquivo (o Edge runtime não acessa o filesystem).
-- **API:** o HOC `withRequestLog` (`src/lib/withRequestLog.ts`) envolve cada
-  handler e registra método, rota, **status**, **duração**, usuário, IP e
-  user-agent.
-
-A escrita fica em `src/lib/requestLogger.ts`. São gravados **apenas metadados** —
-nunca o corpo da requisição/resposta —, portanto senhas não vão para o arquivo.
-A pasta `logs/` é ignorada pelo Git. O inventário completo das chamadas de API
-está em [`Docs/Chamadas_de_API.md`](Docs/Chamadas_de_API.md).
-
----
-
 ## 📜 Scripts Disponíveis
 
 No diretório do projeto, você pode rodar:

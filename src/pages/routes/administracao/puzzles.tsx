@@ -58,10 +58,7 @@ function parseFormState(s: FormState): {
 } {
   const solucaoArr = s.solucao.trim().split(/\s+/).filter(Boolean);
   if (solucaoArr.length === 0) {
-    return {
-      body: {},
-      erro: 'Informe ao menos um lance na solução (UCI, separados por espaço).',
-    };
+    return { body: {}, erro: 'Informe ao menos um lance na solução (UCI, separados por espaço).' };
   }
   const faseNum = Number(s.fase);
   if (!Number.isInteger(faseNum) || faseNum < 1) {
@@ -71,10 +68,7 @@ function parseFormState(s: FormState): {
   if (ratingNum !== null && !Number.isFinite(ratingNum)) {
     return { body: {}, erro: 'Rating inválido.' };
   }
-  const temasArr = s.temas
-    .split(',')
-    .map((t) => t.trim())
-    .filter(Boolean);
+  const temasArr = s.temas.split(',').map((t) => t.trim()).filter(Boolean);
 
   return {
     body: {
@@ -153,7 +147,6 @@ export default function AdminPuzzles() {
     setEditForm(formStateFromPuzzle(p));
     setEditErr(null);
   }
-
   function fecharEditor() {
     setEditando(null);
     setEditErr(null);
@@ -212,9 +205,7 @@ export default function AdminPuzzles() {
       <nav className={styles.nav}>
         <Link href="/routes/administracao" className={styles.logo}>
           <span className={styles.logoIcon}>♟</span>
-          <span>
-            Cesu<span className={styles.logoAccent}>Chess</span>
-          </span>
+          <span>Cesu<span className={styles.logoAccent}>Chess</span></span>
         </Link>
         <div className={styles.navLinks}>
           <Link href="/routes/administracao" className={styles.navLink}>← Administração</Link>

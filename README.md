@@ -393,7 +393,7 @@ Configure `TEST_DATABASE_URL` no `.env.local` (já vem no `.env.local.example`):
 TEST_DATABASE_URL=postgres://postgres:SUA_SENHA@localhost:5432/CesuChess_test
 ```
 
-### Cobertura de código (Sprint 3)
+### Cobertura de código 
 
 O `npm run test:coverage` usa `@vitest/coverage-v8` e gera relatório em `coverage/index.html`. A configuração (em `vitest.config.ts`) tem thresholds de **65%** linhas/funções/statements e **45%** branches. A meta original do Sprint 3 (70–80%) é atingida em **linhas (71.98%)**; funções e statements ficam em **67%** com a suíte unit+integration atual (cobertura adicional vem dos 7 E2E do Playwright, não contabilizados aqui).
 

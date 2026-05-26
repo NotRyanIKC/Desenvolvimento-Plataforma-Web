@@ -164,9 +164,7 @@ export default function AdminBots() {
       <nav className={styles.nav}>
         <Link href="/routes/administracao" className={styles.logo}>
           <span className={styles.logoIcon}>♟</span>
-          <span>
-            Cesu<span className={styles.logoAccent}>Chess</span>
-          </span>
+          <span>Cesu<span className={styles.logoAccent}>Chess</span></span>
         </Link>
         <div className={styles.navLinks}>
           <Link href="/routes/administracao" className={styles.navLink}>← Administração</Link>

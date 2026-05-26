@@ -30,9 +30,10 @@ Integration tests hit **real** external services (Lichess) and would hit a real 
 ## Required setup
 
 The app will not run without:
-- A running PostgreSQL (14+) with `DB/schema.sql` applied (creates 10 tables, 3 enums, `set_atualizado_em` triggers; uses `pgcrypto` for `gen_random_uuid()`).
+- A running PostgreSQL (14+) with `DB/schema.sql` applied (creates 11 tables — including `comentario` from Sprint 3 — 3 enums, `set_atualizado_em` triggers; uses `pgcrypto` for `gen_random_uuid()`).
 - A `.env.local` (git-ignored) with:
-  - `DATABASE_URL=postgres://postgres:PASS@localhost:5432/cesuchess`
+  - `DATABASE_URL=postgres://postgres:PASS@localhost:5432/CesuChess`
+  - `TEST_DATABASE_URL=postgres://postgres:PASS@localhost:5432/CesuChess_test` (banco separado para integração + E2E)
   - `SESSION_SECRET=` (≥16 chars; HMAC key for session cookies — `session.ts` throws if missing/short)
 
 ## Architecture

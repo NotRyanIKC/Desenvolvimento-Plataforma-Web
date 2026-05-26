@@ -45,12 +45,10 @@ export default function ComentariosSection({ puzzleLichessId }: Props) {
   const [carregando, setCarregando] = useState(true);
   const [erroLista, setErroLista] = useState<string | null>(null);
 
-  // novo comentário
   const [novoTexto, setNovoTexto] = useState('');
   const [publicando, setPublicando] = useState(false);
   const [erroPub, setErroPub] = useState<string | null>(null);
 
-  // edição inline
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [editTexto, setEditTexto] = useState('');
   const [salvandoEdit, setSalvandoEdit] = useState(false);
@@ -66,9 +64,7 @@ export default function ComentariosSection({ puzzleLichessId }: Props) {
       setComentarios(data.comentarios);
     } catch (err) {
       setErroLista(
-        err instanceof ApiError
-          ? err.message
-          : 'Falha ao carregar comentários.'
+        err instanceof ApiError ? err.message : 'Falha ao carregar comentários.'
       );
     } finally {
       setCarregando(false);
@@ -106,9 +102,7 @@ export default function ComentariosSection({ puzzleLichessId }: Props) {
       if (err instanceof ApiError && err.status === 401) {
         setErroPub('Você precisa estar logado para publicar comentários.');
       } else {
-        setErroPub(
-          err instanceof ApiError ? err.message : 'Falha ao publicar.'
-        );
+        setErroPub(err instanceof ApiError ? err.message : 'Falha ao publicar.');
       }
     } finally {
       setPublicando(false);
@@ -137,15 +131,11 @@ export default function ComentariosSection({ puzzleLichessId }: Props) {
 
     setSalvandoEdit(true);
     try {
-      await api.patch(`/api/comentarios/${editandoId}`, {
-        texto: editTexto,
-      });
+      await api.patch(`/api/comentarios/${editandoId}`, { texto: editTexto });
       cancelarEdicao();
       carregar();
     } catch (err) {
-      setErroEdit(
-        err instanceof ApiError ? err.message : 'Falha ao salvar edição.'
-      );
+      setErroEdit(err instanceof ApiError ? err.message : 'Falha ao salvar edição.');
     } finally {
       setSalvandoEdit(false);
     }
@@ -171,37 +161,24 @@ export default function ComentariosSection({ puzzleLichessId }: Props) {
         </h2>
       </header>
 
-      {/* Formulário de publicação */}
       <form className={styles.composer} onSubmit={publicar}>
-        <textarea
-          className={styles.textarea}
+        <textarea className={styles.textarea}
           placeholder="Compartilhe sua análise ou tática usada nesse puzzle…"
           value={novoTexto}
           onChange={(e) => setNovoTexto(e.target.value)}
           maxLength={1000}
           rows={3}
-          disabled={publicando}
-        />
+          disabled={publicando} />
         <div className={styles.composerFoot}>
-          <span className={styles.charCount}>
-            {novoTexto.trim().length}/1000
-          </span>
-          <button
-            type="submit"
-            className={styles.btnPrimary}
-            disabled={publicando || novoTexto.trim().length === 0}
-          >
+          <span className={styles.charCount}>{novoTexto.trim().length}/1000</span>
+          <button type="submit" className={styles.btnPrimary}
+            disabled={publicando || novoTexto.trim().length === 0}>
             {publicando ? 'Publicando…' : 'Publicar'}
           </button>
         </div>
-        {erroPub && (
-          <p className={styles.msgErr} role="alert">
-            {erroPub}
-          </p>
-        )}
+        {erroPub && <p className={styles.msgErr} role="alert">{erroPub}</p>}
       </form>
 
-      {/* Lista */}
       {carregando ? (
         <div className={styles.empty}>Carregando comentários…</div>
       ) : erroLista ? (
@@ -220,49 +197,35 @@ export default function ComentariosSection({ puzzleLichessId }: Props) {
                 <div className={styles.itemHead}>
                   <span className={styles.autor}>
                     {c.autor.nome}{' '}
-                    <span className={styles.username}>
-                      @{c.autor.username}
-                    </span>
+                    <span className={styles.username}>@{c.autor.username}</span>
                   </span>
                   <span className={styles.data}>
                     {formatarData(c.criadoEm)}
-                    {editado && (
-                      <span className={styles.editadoTag}> · editado</span>
-                    )}
+                    {editado && <span className={styles.editadoTag}> · editado</span>}
                   </span>
                 </div>
 
                 {editandoEste ? (
                   <div className={styles.editArea}>
-                    <textarea
-                      className={styles.textarea}
+                    <textarea className={styles.textarea}
                       value={editTexto}
                       onChange={(e) => setEditTexto(e.target.value)}
                       maxLength={1000}
                       rows={3}
-                      disabled={salvandoEdit}
-                    />
+                      disabled={salvandoEdit} />
                     <div className={styles.editActions}>
-                      <button
-                        className={styles.btnSmall}
+                      <button className={styles.btnSmall}
                         onClick={salvarEdicao}
-                        disabled={salvandoEdit}
-                      >
+                        disabled={salvandoEdit}>
                         {salvandoEdit ? 'Salvando…' : 'Salvar'}
                       </button>
-                      <button
-                        className={`${styles.btnSmall} ${styles.btnGhost}`}
+                      <button className={`${styles.btnSmall} ${styles.btnGhost}`}
                         onClick={cancelarEdicao}
-                        disabled={salvandoEdit}
-                      >
+                        disabled={salvandoEdit}>
                         Cancelar
                       </button>
                     </div>
-                    {erroEdit && (
-                      <p className={styles.msgErr} role="alert">
-                        {erroEdit}
-                      </p>
-                    )}
+                    {erroEdit && <p className={styles.msgErr} role="alert">{erroEdit}</p>}
                   </div>
                 ) : (
                   <p className={styles.texto}>{c.texto}</p>
@@ -270,16 +233,10 @@ export default function ComentariosSection({ puzzleLichessId }: Props) {
 
                 {c.pertenceAoLeitor && !editandoEste && (
                   <div className={styles.itemActions}>
-                    <button
-                      className={styles.btnSmall}
-                      onClick={() => iniciarEdicao(c)}
-                    >
+                    <button className={styles.btnSmall} onClick={() => iniciarEdicao(c)}>
                       Editar
                     </button>
-                    <button
-                      className={`${styles.btnSmall} ${styles.btnDanger}`}
-                      onClick={() => excluir(c)}
-                    >
+                    <button className={`${styles.btnSmall} ${styles.btnDanger}`} onClick={() => excluir(c)}>
                       Excluir
                     </button>
                   </div>

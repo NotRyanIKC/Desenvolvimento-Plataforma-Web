@@ -50,7 +50,7 @@ export default function Register() {
         email: form.email,
         senha: form.senha,
       });
-      router.push('/routes/profile');
+      router.push('/');
     } catch (err) {
       setErro(
         err instanceof ApiError ? err.message : 'Falha inesperada no cadastro.'

@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import styles from '@/styles/Home.module.css';
+import { useMe } from '@/hooks/useMe';
 
 const BOARD_PIECES: (string | null)[][] = [
   ['♜', '♞', '♝', '♛', '♚', '♝', '♞', '♜'],
@@ -14,6 +15,9 @@ const BOARD_PIECES: (string | null)[][] = [
 ];
 
 export default function Home() {
+  const { carregando, user, isAdmin } = useMe();
+  const logado = !!user;
+
   return (
     <div className={styles.root}>
       <div className={styles.gridBg} aria-hidden="true" />
@@ -27,12 +31,28 @@ export default function Home() {
           </span>
         </div>
         <div className={styles.navActions}>
-          <Link href="/routes/login" className={styles.btnOutline}>
-            Entrar
-          </Link>
-          <Link href="/routes/register" className={styles.btnPrimary}>
-            Criar Conta
-          </Link>
+          {!carregando &&
+            (logado ? (
+              <>
+                {isAdmin && (
+                  <Link href="/routes/administracao" className={styles.btnOutline}>
+                    Administração
+                  </Link>
+                )}
+                <Link href="/routes/profile" className={styles.btnPrimary}>
+                  Perfil
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/routes/login" className={styles.btnOutline}>
+                  Entrar
+                </Link>
+                <Link href="/routes/register" className={styles.btnPrimary}>
+                  Criar Conta
+                </Link>
+              </>
+            ))}
         </div>
       </nav>
 
@@ -108,27 +128,59 @@ export default function Home() {
       </main>
 
       <section className={styles.cards} aria-label="Ações principais">
-        <Link href="/routes/register" className={styles.card}>
-          <span className={styles.cardIcon}>✦</span>
-          <div className={styles.cardBody}>
-            <h2 className={styles.cardTitle}>Criar Conta</h2>
-            <p className={styles.cardDesc}>
-              Registre-se gratuitamente e comece a acompanhar seu progresso.
-            </p>
-          </div>
-          <span className={styles.cardArrow}>→</span>
-        </Link>
+        {!carregando && !logado && (
+          <>
+            <Link href="/routes/register" className={styles.card}>
+              <span className={styles.cardIcon}>✦</span>
+              <div className={styles.cardBody}>
+                <h2 className={styles.cardTitle}>Criar Conta</h2>
+                <p className={styles.cardDesc}>
+                  Registre-se gratuitamente e comece a acompanhar seu progresso.
+                </p>
+              </div>
+              <span className={styles.cardArrow}>→</span>
+            </Link>
 
-        <Link href="/routes/login" className={styles.card}>
-          <span className={styles.cardIcon}>◈</span>
-          <div className={styles.cardBody}>
-            <h2 className={styles.cardTitle}>Realizar Login</h2>
-            <p className={styles.cardDesc}>
-              Acesse sua conta e continue de onde parou.
-            </p>
-          </div>
-          <span className={styles.cardArrow}>→</span>
-        </Link>
+            <Link href="/routes/login" className={styles.card}>
+              <span className={styles.cardIcon}>◈</span>
+              <div className={styles.cardBody}>
+                <h2 className={styles.cardTitle}>Realizar Login</h2>
+                <p className={styles.cardDesc}>
+                  Acesse sua conta e continue de onde parou.
+                </p>
+              </div>
+              <span className={styles.cardArrow}>→</span>
+            </Link>
+          </>
+        )}
+
+        {!carregando && logado && (
+          <>
+            <Link href="/routes/profile" className={styles.card}>
+              <span className={styles.cardIcon}>◈</span>
+              <div className={styles.cardBody}>
+                <h2 className={styles.cardTitle}>Perfil</h2>
+                <p className={styles.cardDesc}>
+                  Gerencie sua conta e acompanhe seu progresso.
+                </p>
+              </div>
+              <span className={styles.cardArrow}>→</span>
+            </Link>
+
+            {isAdmin && (
+              <Link href="/routes/administracao" className={styles.card}>
+                <span className={styles.cardIcon}>⚙</span>
+                <div className={styles.cardBody}>
+                  <h2 className={styles.cardTitle}>Administração</h2>
+                  <p className={styles.cardDesc}>
+                    Gerencie usuários, puzzles e bots da plataforma.
+                  </p>
+                </div>
+                <span className={styles.cardArrow}>→</span>
+              </Link>
+            )}
+          </>
+        )}
 
         <Link href="/routes/play" className={styles.card}>
           <span className={styles.cardIcon}>⬡</span>

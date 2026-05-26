@@ -162,12 +162,14 @@ export default function AdminBots() {
       <div className={styles.gridBg} aria-hidden="true" />
 
       <nav className={styles.nav}>
-        <Link href="/routes/administracao" className={styles.logo}>
+        <Link href="/" className={styles.logo}>
           <span className={styles.logoIcon}>♟</span>
           <span>Cesu<span className={styles.logoAccent}>Chess</span></span>
         </Link>
         <div className={styles.navLinks}>
           <Link href="/routes/administracao" className={styles.navLink}>← Administração</Link>
+          <Link href="/routes/profile" className={styles.navLink}>Perfil</Link>
+          <Link href="/routes/puzzles" className={styles.navLink}>Problemas</Link>
         </div>
       </nav>
 

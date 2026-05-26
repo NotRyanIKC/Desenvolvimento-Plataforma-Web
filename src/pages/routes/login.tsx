@@ -23,11 +23,11 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const { isAdmin } = await api.post<MeResponse>('/api/auth/login', {
+      await api.post<MeResponse>('/api/auth/login', {
         identifier: identifier.trim(),
         senha,
       });
-      router.push(isAdmin ? '/routes/administracao' : '/routes/profile');
+      router.push('/');
     } catch (err) {
       setErro(
         err instanceof ApiError ? err.message : 'Falha inesperada no login.'

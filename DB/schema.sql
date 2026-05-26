@@ -149,6 +149,7 @@ CREATE TABLE puzzle (
     id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     adicionado_por_id  UUID REFERENCES admin(id) ON DELETE SET NULL,
     lichess_id         VARCHAR(20) UNIQUE,
+    nome               VARCHAR(120),
     fen                TEXT        NOT NULL,
     solucao            TEXT[]      NOT NULL,
     rating             INTEGER     NOT NULL DEFAULT 1200

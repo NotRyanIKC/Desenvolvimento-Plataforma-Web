@@ -14,6 +14,7 @@ import {
   firstError,
   validateFase,
   validateFen,
+  validatePuzzleNome,
   validateRating,
   validateSolucao,
 } from '@/lib/validation';
@@ -36,9 +37,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   if (req.method === 'POST') {
-    const { fen, solucao, fase, rating, temas, lichessId } = req.body ?? {};
+    const { nome, fen, solucao, fase, rating, temas, lichessId } = req.body ?? {};
 
     const erro = firstError(
+      validatePuzzleNome(nome),
       validateFen(fen),
       validateSolucao(solucao),
       validateFase(fase),
@@ -64,6 +66,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
       const row = await createPuzzle(
         {
+          nome,
           fen,
           solucao,
           fase,

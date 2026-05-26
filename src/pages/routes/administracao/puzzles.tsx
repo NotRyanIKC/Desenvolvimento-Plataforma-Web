@@ -14,6 +14,7 @@ import { api, ApiError } from '@/lib/apiClient';
 interface PuzzleDTO {
   id: string;
   lichessId: string | null;
+  nome: string | null;
   fen: string;
   solucao: string[];
   rating: number;
@@ -24,6 +25,7 @@ interface PuzzleDTO {
 }
 
 interface FormState {
+  nome: string;
   fen: string;
   solucao: string;
   fase: string;
@@ -33,6 +35,7 @@ interface FormState {
 }
 
 const FORM_VAZIO: FormState = {
+  nome: '',
   fen: '',
   solucao: '',
   fase: '1',
@@ -43,6 +46,7 @@ const FORM_VAZIO: FormState = {
 
 function formStateFromPuzzle(p: PuzzleDTO): FormState {
   return {
+    nome: p.nome ?? '',
     fen: p.fen,
     solucao: p.solucao.join(' '),
     fase: String(p.fase),
@@ -56,6 +60,10 @@ function parseFormState(s: FormState): {
   body: Record<string, unknown>;
   erro: string | null;
 } {
+  const nome = s.nome.trim();
+  if (nome.length < 2) {
+    return { body: {}, erro: 'Informe o nome do puzzle (mínimo 2 caracteres).' };
+  }
   const solucaoArr = s.solucao.trim().split(/\s+/).filter(Boolean);
   if (solucaoArr.length === 0) {
     return { body: {}, erro: 'Informe ao menos um lance na solução (UCI, separados por espaço).' };
@@ -72,6 +80,7 @@ function parseFormState(s: FormState): {
 
   return {
     body: {
+      nome,
       fen: s.fen.trim(),
       solucao: solucaoArr,
       fase: faseNum,
@@ -225,6 +234,15 @@ export default function AdminPuzzles() {
           <p className={styles.cardSub}>Preencha os campos abaixo e clique em &ldquo;Criar puzzle&rdquo;.</p>
 
           <div className={styles.field}>
+            <label className={styles.label} htmlFor="nome">Nome do puzzle</label>
+            <input id="nome" className={styles.input}
+              placeholder="Mate em 2 — sacrifício de dama"
+              value={criarForm.nome}
+              onChange={(e) => setCriarForm((f) => ({ ...f, nome: e.target.value }))}
+              disabled={salvandoCriar} />
+          </div>
+
+          <div className={styles.field}>
             <label className={styles.label} htmlFor="fen">FEN da posição</label>
             <input id="fen" className={styles.input}
               placeholder="r6k/pp2r2p/4Rp1Q/3p4/8/1N1P2bR/PqP3PP/7K w - - 0 25"
@@ -307,6 +325,7 @@ export default function AdminPuzzles() {
               <table className={styles.table}>
                 <thead>
                   <tr>
+                    <th>Nome</th>
                     <th>Lichess ID</th>
                     <th>FEN</th>
                     <th>Fase</th>
@@ -318,6 +337,7 @@ export default function AdminPuzzles() {
                 <tbody>
                   {puzzles.map((p) => (
                     <tr key={p.id}>
+                      <td>{p.nome ?? '—'}</td>
                       <td>{p.lichessId ?? '—'}</td>
                       <td className={styles.cellMono} title={p.fen}>{p.fen}</td>
                       <td>{p.fase}</td>
@@ -347,6 +367,14 @@ export default function AdminPuzzles() {
               <h2 className={styles.modalTitle}>
                 Editar puzzle {editando.lichessId ?? editando.id.slice(0, 8)}
               </h2>
+
+              <div className={styles.field}>
+                <label className={styles.label}>Nome do puzzle</label>
+                <input className={styles.input}
+                  value={editForm.nome}
+                  onChange={(e) => setEditForm((f) => ({ ...f, nome: e.target.value }))}
+                  disabled={salvandoEdit} />
+              </div>
 
               <div className={styles.field}>
                 <label className={styles.label}>FEN da posição</label>

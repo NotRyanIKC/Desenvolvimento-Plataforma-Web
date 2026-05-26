@@ -18,6 +18,7 @@ import {
   firstError,
   validateFase,
   validateFen,
+  validatePuzzleNome,
   validateRating,
   validateSolucao,
 } from '@/lib/validation';
@@ -49,11 +50,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   if (req.method === 'PATCH') {
-    const { fen, solucao, fase, rating, temas, lichessId, ativo } =
+    const { nome, fen, solucao, fase, rating, temas, lichessId, ativo } =
       req.body ?? {};
 
     const input: UpdatePuzzleInput = {};
 
+    if (nome !== undefined) {
+      const e = validatePuzzleNome(nome);
+      if (e) return res.status(400).json({ error: e });
+      input.nome = nome;
+    }
     if (fen !== undefined) {
       const e = validateFen(fen);
       if (e) return res.status(400).json({ error: e });

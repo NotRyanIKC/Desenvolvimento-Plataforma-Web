@@ -12,9 +12,10 @@ import path from 'node:path';
  * EXTERNOS (services/*). Arquivos excluídos são testados INDIRETAMENTE via
  * API handlers (que rodam no E2E do Playwright).
  *
- * Thresholds calibrados pelo que está atualmente coberto pela suíte
- * unit+integration. O E2E (Playwright) cobre adicionalmente o caminho
- * UI → API → repositório, mas não é contabilizado aqui.
+ * Thresholds: mínimo de 70% em todas as métricas (requisito do projeto).
+ * A suíte unit+integration cobre lib/* e services/* acima desse piso; o E2E
+ * (Playwright) cobre adicionalmente o caminho UI → API → repositório, mas não
+ * é contabilizado aqui.
  */
 export default defineConfig({
   resolve: {
@@ -30,6 +31,9 @@ export default defineConfig({
     fileParallelism: false,
     coverage: {
       provider: 'v8',
+      // all:true conta TODO arquivo do include, mesmo os que nenhum teste
+      // importa — evita inflar o % por omissão de arquivos não cobertos.
+      all: true,
       reporter: ['text', 'html', 'lcov'],
       reportsDirectory: './coverage',
       include: ['src/lib/**/*.ts', 'src/services/**/*.ts'],
@@ -41,10 +45,10 @@ export default defineConfig({
         'src/lib/admin.ts',         // guard testado via E2E admin
       ],
       thresholds: {
-        lines: 65,
-        functions: 65,
-        branches: 45,
-        statements: 65,
+        lines: 70,
+        functions: 70,
+        branches: 70,
+        statements: 70,
       },
     },
   },

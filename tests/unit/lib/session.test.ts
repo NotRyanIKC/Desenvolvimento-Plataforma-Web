@@ -1,5 +1,13 @@
-import { describe, test, expect, beforeAll, afterAll } from 'vitest';
-import { encodeSession, decodeSession } from '../../../src/lib/session';
+import { describe, test, expect, beforeAll, afterAll, vi } from 'vitest';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import {
+  encodeSession,
+  decodeSession,
+  getSessionUserId,
+  setSessionCookie,
+  clearSessionCookie,
+  SESSION_COOKIE,
+} from '../../../src/lib/session';
 
 /**
  * Estes testes assumem a presença de SESSION_SECRET no ambiente.
@@ -101,6 +109,79 @@ describe('🧪 Testes Unitários - Sessão por Cookie Assinado (HMAC-SHA256)', (
       // tolerância de 5s pra latência do teste
       expect(exp - agora).toBeGreaterThanOrEqual(setedias - 5);
       expect(exp - agora).toBeLessThanOrEqual(setedias + 5);
+    });
+  });
+
+  // ─── getSessionUserId (leitura do cookie no request) ─────────────────────
+
+  describe('getSessionUserId', () => {
+    function reqComCookie(cookie?: string): NextApiRequest {
+      return { headers: cookie === undefined ? {} : { cookie } } as NextApiRequest;
+    }
+
+    test('Deve extrair o usuarioId de um cookie de sessão válido', () => {
+      const valor = encodeURIComponent(encodeSession(UUID_VALIDO));
+      const req = reqComCookie(`outro=1; ${SESSION_COOKIE}=${valor}`);
+      expect(getSessionUserId(req)).toBe(UUID_VALIDO);
+    });
+
+    test('Deve retornar null quando não há header de cookie', () => {
+      expect(getSessionUserId(reqComCookie())).toBeNull();
+    });
+
+    test('Deve retornar null quando o cookie de sessão não está presente', () => {
+      expect(getSessionUserId(reqComCookie('tema=escuro'))).toBeNull();
+    });
+
+    test('Deve retornar null para cookie de sessão adulterado', () => {
+      const req = reqComCookie(`${SESSION_COOKIE}=valor.invalido.assinatura`);
+      expect(getSessionUserId(req)).toBeNull();
+    });
+  });
+
+  // ─── setSessionCookie / clearSessionCookie ───────────────────────────────
+
+  describe('setSessionCookie e clearSessionCookie', () => {
+    function resFake() {
+      const setHeader = vi.fn();
+      return { res: { setHeader } as unknown as NextApiResponse, setHeader };
+    }
+
+    test('setSessionCookie escreve Set-Cookie httpOnly com Max-Age positivo', () => {
+      const { res, setHeader } = resFake();
+      setSessionCookie(res, UUID_VALIDO);
+      expect(setHeader).toHaveBeenCalledTimes(1);
+      const [nome, valor] = setHeader.mock.calls[0];
+      expect(nome).toBe('Set-Cookie');
+      expect(valor).toContain(`${SESSION_COOKIE}=`);
+      expect(valor).toContain('HttpOnly');
+      expect(valor).toContain('SameSite=Lax');
+      expect(valor).toContain(`Max-Age=${60 * 60 * 24 * 7}`);
+    });
+
+    test('clearSessionCookie zera o cookie (Max-Age=0)', () => {
+      const { res, setHeader } = resFake();
+      clearSessionCookie(res);
+      const valor = String(setHeader.mock.calls[0][1]);
+      expect(valor).toContain(`${SESSION_COOKIE}=`);
+      expect(valor).toContain('Max-Age=0');
+    });
+  });
+
+  // ─── getSecret (segredo ausente) ─────────────────────────────────────────
+
+  describe('proteção de SESSION_SECRET', () => {
+    test('encodeSession lança quando o segredo está ausente ou é curto', () => {
+      const anterior = process.env.SESSION_SECRET;
+      try {
+        delete process.env.SESSION_SECRET;
+        expect(() => encodeSession(UUID_VALIDO)).toThrow(/SESSION_SECRET/);
+
+        process.env.SESSION_SECRET = 'curto';
+        expect(() => encodeSession(UUID_VALIDO)).toThrow(/SESSION_SECRET/);
+      } finally {
+        process.env.SESSION_SECRET = anterior;
+      }
     });
   });
 

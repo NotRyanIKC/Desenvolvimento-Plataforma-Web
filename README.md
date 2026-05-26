@@ -55,7 +55,8 @@ O resultado é uma aplicação completa, com tabuleiro interativo, validação d
 - 🔐 **Login por e-mail OU username** + senha, com **sessão por cookie httpOnly assinado (HMAC-SHA256)**.
 - 🛡️ **Modo administrador** com guard `requireAdmin`, exclusivo para usuários presentes na tabela `admin`. As rotas `/api/admin/*` retornam **401** sem sessão e **403** quando a sessão não é de admin.
 - 💬 **Comentários em puzzles** — qualquer usuário autenticado pode publicar comentários em qualquer puzzle (UC-16). Edição e exclusão são restritas ao autor (UC-18, UC-19). Visualização é aberta a anônimos (UC-17).
-- 🔌 **Integração com a API pública do Lichess** isolada em `src/services/lichess.ts` e exposta ao cliente apenas via proxy server-side (`/api/puzzles/[id]`).
+- 🧩 **Puzzles táticos em três trilhas** — fases estáticas (`/routes/puzzles`), **Puzzles do Lichess** ao vivo e **Puzzles dos Mestres** (catálogo cadastrado pelo admin, com nome/FEN/solução/tema/dificuldade). A resolução no tabuleiro registra o resultado no histórico do jogador (UC-12, UC-32).
+- 🔌 **Integração com a API pública do Lichess** isolada em `src/services/lichess.ts` e exposta ao cliente apenas via proxy server-side (`/api/puzzles/[id]`, que aceita `daily`, `next` ou um ID e já devolve o puzzle convertido em FEN + solução).
 - 🗄️ **Persistência em PostgreSQL** com modelagem completa baseada em ferramenta CASE (BRModeler), 11 tabelas + 3 enums + triggers (`usuario`, `admin`, `jogador`, `bot`, `partida`, `lance`, `puzzle`, `tentativa_puzzle`, `progresso_puzzle`, `puzzles_resolvidos`, `comentario`).
 - 🧪 **Suíte de testes em três níveis** (Sprint 3) — unitários (Vitest), integração contra Postgres real, E2E em browser real (Playwright). Cobertura de código com meta de 70–80%. Veja [Testes](#-testes).
 
@@ -92,7 +93,7 @@ O resultado é uma aplicação completa, com tabuleiro interativo, validação d
 |---|---|---|
 | [chess.js](https://github.com/jhlywa/chess.js) | `^1.4.0` | Engine de xadrez: validação de jogadas, estado do jogo, FEN/PGN |
 | [react-chessboard](https://github.com/Clariity/react-chessboard) | `^5.10.0` | Componente React para renderização do tabuleiro |
-| [Lichess API](https://lichess.org/api) | pública | Fonte dos puzzles (puzzle por ID e puzzle diário) |
+| [Lichess API](https://lichess.org/api) | pública | Fonte dos puzzles (por ID, diário e próximo/aleatório) |
 
 ### Banco de Dados e Autenticação
 
@@ -110,6 +111,8 @@ O resultado é uma aplicação completa, com tabuleiro interativo, validação d
 | [ESLint](https://eslint.org/) | `^9` | Linter para padronização do código |
 | [eslint-config-next](https://nextjs.org/docs/app/api-reference/config/eslint) | `16.2.5` | Configuração oficial do ESLint para Next.js |
 | [Vitest](https://vitest.dev/) | `^4.1.6` | Runner de testes unitários e de integração (TypeScript nativo, API estilo Jest) |
+| [@vitest/coverage-v8](https://vitest.dev/guide/coverage) | `^4.1.6` | Provedor de cobertura de código (v8) |
+| [Playwright](https://playwright.dev/) | `^1.49.0` | Testes end-to-end em browser real |
 | [babel-plugin-react-compiler](https://react.dev/learn/react-compiler) | `1.0.0` | React Compiler para otimizações automáticas |
 | `@types/node`, `@types/pg`, `@types/bcryptjs`, `@types/react`, `@types/react-dom` | — | Definições de tipos |
 
@@ -117,7 +120,7 @@ O resultado é uma aplicação completa, com tabuleiro interativo, validação d
 
 ## 🌐 APIs Utilizadas
 
-O CesuChess consome uma **API externa** (Lichess) e expõe **API Routes internas** próprias (via Next.js) que cobrem autenticação, CRUD de usuário e CRUD de puzzles resolvidos.
+O CesuChess consome uma **API externa** (Lichess) e expõe **API Routes internas** próprias (via Next.js) que cobrem autenticação, CRUD de usuário, comentários, histórico de puzzles, os CRUDs de administração (catálogo de puzzles e bots) e o catálogo público dos "Puzzles dos Mestres".
 
 ### API Externa — Lichess
 
@@ -127,12 +130,13 @@ A [API pública do Lichess](https://lichess.org/api) é a fonte oficial dos puzz
 |---|---|---|
 | `GET` | `https://lichess.org/api/puzzle/{id}` | Busca um puzzle específico pelo ID. |
 | `GET` | `https://lichess.org/api/puzzle/daily` | Busca o puzzle do dia. |
+| `GET` | `https://lichess.org/api/puzzle/next` | Busca um puzzle aleatório (aceita `?angle=<tema>` e `?difficulty=<nível>`). |
 
 **Características:**
 
 - **Autenticação:** não exige token para estes endpoints (API pública).
 - **Rate limit:** máximo de **1 requisição por segundo** por IP.
-- **Cache:** respostas são cacheadas pelo `fetch` do Next.js (`revalidate: 86400s` para puzzles por ID, `3600s` para o puzzle diário).
+- **Cache:** respostas são cacheadas pelo `fetch` do Next.js (`revalidate: 86400s` para puzzles por ID, `3600s` para o puzzle diário); `next` é sempre buscado fresco (`cache: 'no-store'`).
 - **Formato:** JSON, com os campos `game` (PGN, jogadores) e `puzzle` (rating, solução em UCI, temas, ply inicial).
 
 ### API Routes Internas (Next.js)
@@ -183,11 +187,12 @@ Para evitar chamadas diretas do cliente ao Lichess (e respeitar o rate limit), o
 | `GET / PATCH / DELETE` | `/api/admin/bots/[id]` | Lê, atualiza ou remove um bot. |
 | `GET` | `/api/admin/users` | Lista todos os usuários da plataforma. |
 
-#### Proxy do Lichess
+#### Puzzles públicos (proxy Lichess + catálogo dos mestres)
 
 | Método | Endpoint | Função |
 |---|---|---|
-| `GET` | `/api/puzzles/[id]` | Proxy para `GET /api/puzzle/{id}` do Lichess. Aceita `id = 'daily'`. |
+| `GET` | `/api/puzzles/[id]` | Proxy do Lichess. Aceita `daily`, `next` (com `?angle`/`?difficulty`) ou um ID; devolve o puzzle já **convertido** (FEN + solução), com a conversão PGN→FEN feita no servidor por `lib/puzzleLichess.ts`. |
+| `GET` | `/api/puzzles/mestres` | Lista pública dos puzzles **ativos** do catálogo (os "Puzzles dos Mestres"). |
 
 ### Fluxo de uma requisição de puzzle (proxy)
 
@@ -259,7 +264,9 @@ psql -U postgres -c "CREATE DATABASE cesuchess;"
 psql -U postgres -d cesuchess -f DB/schema.sql
 ```
 
-O `schema.sql` cria as 10 tabelas (`usuario`, `jogador`, `admin`, `bot`, `partida`, `lance`, `puzzle`, `tentativa_puzzle`, `progresso_puzzle`, `puzzles_resolvidos`), 3 enums e os triggers necessários.
+O `schema.sql` cria as 11 tabelas (`usuario`, `jogador`, `admin`, `bot`, `partida`, `lance`, `puzzle`, `tentativa_puzzle`, `progresso_puzzle`, `puzzles_resolvidos`, `comentario`), 3 enums e os triggers necessários.
+
+> Em um banco **já existente**, não re-execute o `schema.sql` (ele começa com `DROP TABLE … CASCADE` e apaga os dados). Para incorporar mudanças após um `git pull`, aplique os scripts aditivos e idempotentes em `DB/migrations/*.sql` — por exemplo `002_add_puzzle_nome.sql`, que adiciona a coluna `nome` ao catálogo de puzzles.
 
 ### 4. Configure as variáveis de ambiente
 
@@ -359,7 +366,7 @@ O CesuChess tem suíte de testes **nos três níveis exigidos pelo Sprint 3** �
 
 | Nível | Ferramenta | Local | Cobre |
 |---|---|---|---|
-| **Unitários** | [Vitest](https://vitest.dev/) | `tests/unit/**/*.test.ts` | Funções puras: `validation`, `chessEngine`, `session`, `users.hashSenha`. |
+| **Unitários** | [Vitest](https://vitest.dev/) | `tests/unit/**/*.test.ts` | Funções puras: `validation`, `chessEngine`, `session` (cookie/HMAC), `users.hashSenha`, `puzzleLichess` (PGN→FEN) e o cliente `services/lichess` (mockado). |
 | **Integração** | [Vitest](https://vitest.dev/) + Postgres | `tests/integration/**/*.test.ts` | Repositórios contra `CesuChess_test`: `users`, `comentarios`, `puzzlesResolvidos`, `puzzles` (admin), `bots` (admin) + proxy Lichess. |
 | **End-to-End** | [Playwright](https://playwright.dev/) | `tests/e2e/**/*.spec.ts` | Fluxos completos no browser: auth, perfil, histórico de puzzles, admin (puzzles/bots), comentários. |
 
@@ -395,13 +402,13 @@ TEST_DATABASE_URL=postgres://postgres:SUA_SENHA@localhost:5432/CesuChess_test
 
 ### Cobertura de código 
 
-O `npm run test:coverage` usa `@vitest/coverage-v8` e gera relatório em `coverage/index.html`. A configuração (em `vitest.config.ts`) tem thresholds de **65%** linhas/funções/statements e **45%** branches. A meta original do Sprint 3 (70–80%) é atingida em **linhas (71.98%)**; funções e statements ficam em **67%** com a suíte unit+integration atual (cobertura adicional vem dos 7 E2E do Playwright, não contabilizados aqui).
+O `npm run test:coverage` usa `@vitest/coverage-v8` e gera relatório em `coverage/index.html`. A configuração (em `vitest.config.ts`) exige **70%** em linhas, funções, statements e branches, com `all: true` para contar todos os arquivos do escopo (e não inflar o número omitindo os não cobertos). A suíte unit+integration atual atinge **statements 82.7%, branches 73.8%, funções 88% e linhas 86.8%** sobre `src/lib` + `src/services` (a cobertura adicional do caminho UI → API → repositório vem dos E2E do Playwright, não contabilizados aqui).
 
 Inclui: `src/lib/**`, `src/services/**`. Exclui wrappers de logging (`withRequestLog.ts`, `requestLogger.ts`), guard de admin (`admin.ts` — testado via E2E) e cliente HTTP do browser (`apiClient.ts` — testado via E2E).
 
 ### Casos de teste rastreáveis
 
-Cada teste tem um identificador `CT-XX` referenciado em [`Docs/CesuChess_Casos_de_Teste.docx`](Docs/CesuChess_Casos_de_Teste.docx) — 41 casos no total (16 unit Sprint 2 + 1 integração Lichess + 9 unit Sprint 3 + 8 integração novos + 7 E2E).
+Cada teste tem um identificador `CT-XX` referenciado em [`Docs/CesuChess_Casos_de_Teste.docx`](Docs/CesuChess_Casos_de_Teste.docx) — 45 casos no total (16 unit Sprint 2 + 1 integração Lichess + 9 unit Sprint 3 + 8 integração novos + 7 E2E + 4 dos Puzzles dos Mestres).
 
 ### Convenções
 
@@ -419,10 +426,11 @@ Desenvolvimento-Plataforma-Web/
 ├── DB/                                # Modelagem e schema do banco
 │   ├── Cesuchess 1.0                  # Arquivo-fonte do BRModeler (ferramenta CASE)
 │   ├── admin_seed.sql                 # Script de promoção manual de admin
+│   ├── migrations/                    # Scripts aditivos idempotentes (001 comentario, 002 puzzle.nome)
 │   └── schema.sql                     # Schema unificado (11 tabelas + 3 enums + triggers)
 ├── Docs/
-│   ├── CesuChess_Casos_de_Teste.docx  # 41 casos de teste (CT-01..41)
-│   ├── CesuChess_Casos_de_Uso_v2.docx # Use cases (31 UCs, 15+ implementados)
+│   ├── CesuChess_Casos_de_Teste.docx  # 45 casos de teste (CT-01..45)
+│   ├── CesuChess_Casos_de_Uso_v2.docx # Use cases (32 UCs, 15+ implementados)
 │   ├── Chamadas_de_API.md             # Mapa de endpoints + chamadas cliente
 │   └── Regras_deNegócio.md            # Regras FIDE (RN-XXX) e ilegalidades
 ├── reports/                           # Relatório de análise estática (gerado)
@@ -445,6 +453,7 @@ Desenvolvimento-Plataforma-Web/
 │   │   ├── chessEngine.ts             # Wrapper do chess.js (applyMove)
 │   │   ├── comentarios.ts             # Repositório CRUD do comentário (Sprint 3)
 │   │   ├── db.ts                      # Pool do node-postgres (singleton)
+│   │   ├── puzzleLichess.ts           # Conversão da resposta do Lichess → FEN + solução (PGN→FEN)
 │   │   ├── puzzles.ts                 # Repositório CRUD do catálogo (admin)
 │   │   ├── puzzlesResolvidos.ts       # Repositório CRUD do histórico (jogador)
 │   │   ├── requestLogger.ts           # Escrita JSON-lines em logs/requests.log
@@ -476,7 +485,8 @@ Desenvolvimento-Plataforma-Web/
 │   │   │   │   ├── [id].ts            # PATCH / DELETE (dono)
 │   │   │   │   └── index.ts           # GET (?puzzleId) / POST
 │   │   │   ├── puzzles/
-│   │   │   │   ├── [id].ts            # Proxy do Lichess (aceita 'daily')
+│   │   │   │   ├── [id].ts            # Proxy do Lichess (aceita 'daily', 'next' ou ID)
+│   │   │   │   ├── mestres.ts         # GET público: catálogo de puzzles ativos
 │   │   │   │   └── solved/
 │   │   │   │       ├── [id].ts        # PATCH / DELETE
 │   │   │   │       └── index.ts       # GET (list) / POST (upsert)
@@ -492,9 +502,11 @@ Desenvolvimento-Plataforma-Web/
 │   │       ├── play.tsx               # Hub de modos de jogo
 │   │       ├── profile.tsx            # CRUD Usuário (UC-05..07)
 │   │       ├── puzzles/
-│   │       │   ├── [phase].tsx        # Resolver puzzle + comentários
+│   │       │   ├── [phase].tsx        # Resolver puzzle (fases) + comentários
 │   │       │   ├── history.tsx        # CRUD Puzzles Resolvidos
-│   │       │   └── index.tsx          # Lista de fases
+│   │       │   ├── index.tsx          # Lista de fases + links p/ Lichess e Mestres
+│   │       │   ├── lichess.tsx        # Puzzles do Lichess (ao vivo via proxy)
+│   │       │   └── mestres.tsx        # Puzzles dos Mestres (catálogo + resolução)
 │   │       └── register.tsx
 │   ├── proxy.ts                       # Proxy do Next 16 (logger de páginas)
 │   ├── services/
@@ -507,6 +519,8 @@ Desenvolvimento-Plataforma-Web/
 │   │   ├── Play.module.css            # /routes/play
 │   │   ├── Profile.module.css         # /routes/profile
 │   │   ├── PuzzleHistory.module.css   # /routes/puzzles/history
+│   │   ├── PuzzleLichess.module.css   # /routes/puzzles/lichess
+│   │   ├── PuzzleMestres.module.css   # /routes/puzzles/mestres
 │   │   ├── PuzzlePhase.module.css     # /routes/puzzles/[phase]
 │   │   ├── Puzzles.module.css         # /routes/puzzles (lista)
 │   │   ├── Register.module.css        # /routes/register
@@ -515,22 +529,26 @@ Desenvolvimento-Plataforma-Web/
 │       └── chess.ts                   # Tipos compartilhados do domínio
 ├── tests/                             # Suíte de testes em 3 níveis (Sprint 3)
 │   ├── setup.ts                       # Carrega .env.local e DATABASE_URL → TEST
-│   ├── unit/lib/                      # Vitest — funções puras
-│   │   ├── chessEngine.test.ts        # CT-18..20 (applyMove)
-│   │   ├── session.test.ts            # CT-21..23 (encode/decode)
-│   │   ├── users.test.ts              # CT-24..25 (hashSenha/verificarSenha)
-│   │   ├── validation.test.ts         # CT-01..16 (Sprint 2)
-│   │   └── validation.comentario.test.ts # CT-26 (texto + puzzleId)
+│   ├── unit/                          # Vitest — funções puras
+│   │   ├── lib/
+│   │   │   ├── chessEngine.test.ts        # CT-18..20 (applyMove)
+│   │   │   ├── puzzleLichess.test.ts      # CT-43 (conversão PGN→FEN)
+│   │   │   ├── session.test.ts            # CT-21..23 + cookie/HMAC
+│   │   │   ├── users.test.ts              # CT-24..25 (hashSenha/verificarSenha)
+│   │   │   ├── validation.test.ts         # CT-01..16, CT-42 (validadores)
+│   │   │   └── validation.comentario.test.ts # CT-26 (texto + puzzleId)
+│   │   └── services/
+│   │       └── lichess.test.ts            # CT-45 (cliente Lichess mockado)
 │   ├── integration/                   # Vitest + Postgres (CesuChess_test)
 │   │   ├── helpers/
 │   │   │   └── testDb.ts              # Pool singleton + resetDatabase + promoteToAdmin
 │   │   ├── lib/
 │   │   │   ├── comentarios.test.ts    # CT-30..31 (CRUD + ownership)
-│   │   │   ├── puzzlesAdmin.test.ts   # CT-33 + bots (admin CRUD)
+│   │   │   ├── puzzlesAdmin.test.ts   # CT-33, CT-44 + bots (admin CRUD, nome, ativos)
 │   │   │   ├── puzzlesResolvidos.test.ts # CT-32 (upsert acumula)
 │   │   │   └── users.test.ts          # CT-27..29 (create/update/delete)
 │   │   └── services/
-│   │       └── lichess.test.ts        # CT-17/34 (proxy Lichess)
+│   │       └── lichess.test.ts        # CT-17/34 (proxy Lichess real)
 │   └── e2e/                           # Playwright (browser real, banco real)
 │       ├── helpers/
 │       │   ├── auth.ts                # registrarUsuario / login / registrarELogar

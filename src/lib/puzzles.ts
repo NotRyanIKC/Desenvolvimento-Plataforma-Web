@@ -15,6 +15,7 @@ export interface PuzzleRow {
   id: string;
   adicionado_por_id: string | null;
   lichess_id: string | null;
+  nome: string | null;
   fen: string;
   solucao: string[];
   rating: number;
@@ -27,6 +28,7 @@ export interface PuzzleRow {
 export interface PuzzleDTO {
   id: string;
   lichessId: string | null;
+  nome: string | null;
   fen: string;
   solucao: string[];
   rating: number;
@@ -40,6 +42,7 @@ export function toPuzzleDTO(row: PuzzleRow): PuzzleDTO {
   return {
     id: row.id,
     lichessId: row.lichess_id,
+    nome: row.nome,
     fen: row.fen,
     solucao: row.solucao,
     rating: row.rating,
@@ -51,6 +54,8 @@ export function toPuzzleDTO(row: PuzzleRow): PuzzleDTO {
 }
 
 export interface CreatePuzzleInput {
+  // Opcional na lib (coluna nullable, como rating/temas); a API exige via validação.
+  nome?: string | null;
   fen: string;
   solucao: string[];
   fase: number;
@@ -69,12 +74,13 @@ export async function createPuzzle(
 ): Promise<PuzzleRow> {
   const { rows } = await query<PuzzleRow>(
     `INSERT INTO puzzle
-       (adicionado_por_id, lichess_id, fen, solucao, rating, temas, fase)
-     VALUES ($1, $2, $3, $4, COALESCE($5, 1200), $6, $7)
+       (adicionado_por_id, lichess_id, nome, fen, solucao, rating, temas, fase)
+     VALUES ($1, $2, $3, $4, $5, COALESCE($6, 1200), $7, $8)
      RETURNING *`,
     [
       adminId,
       input.lichessId ?? null,
+      input.nome?.trim() ?? null,
       input.fen.trim(),
       input.solucao,
       input.rating ?? null,
@@ -96,6 +102,17 @@ export async function listAllPuzzles(): Promise<PuzzleRow[]> {
   return rows;
 }
 
+/**
+ * Lista apenas os puzzles ativos do catálogo (mais recentes primeiro).
+ * Uso público na página "Puzzles dos Mestres".
+ */
+export async function listPuzzlesAtivos(): Promise<PuzzleRow[]> {
+  const { rows } = await query<PuzzleRow>(
+    'SELECT * FROM puzzle WHERE ativo = TRUE ORDER BY criado_em DESC'
+  );
+  return rows;
+}
+
 export async function findPuzzleById(id: string): Promise<PuzzleRow | null> {
   const { rows } = await query<PuzzleRow>(
     'SELECT * FROM puzzle WHERE id = $1',
@@ -105,6 +122,7 @@ export async function findPuzzleById(id: string): Promise<PuzzleRow | null> {
 }
 
 export interface UpdatePuzzleInput {
+  nome?: string;
   fen?: string;
   solucao?: string[];
   fase?: number;
@@ -126,6 +144,10 @@ export async function updatePuzzle(
   const params: unknown[] = [];
   let idx = 1;
 
+  if (input.nome !== undefined) {
+    sets.push(`nome = $${idx++}`);
+    params.push(input.nome.trim());
+  }
   if (input.fen !== undefined) {
     sets.push(`fen = $${idx++}`);
     params.push(input.fen.trim());

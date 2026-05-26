@@ -48,6 +48,7 @@ test.describe('🎭 E2E — CRUDs admin', () => {
     await expect(page.locator('#fen')).toBeVisible({ timeout: 15_000 });
 
     const lichessId = `e2e-${Date.now()}`;
+    await page.locator('#nome').fill(`Puzzle E2E ${lichessId}`);
     await page.locator('#fen').fill(
       'r6k/pp2r2p/4Rp1Q/3p4/8/1N1P2bR/PqP3PP/7K w - - 0 25'
     );

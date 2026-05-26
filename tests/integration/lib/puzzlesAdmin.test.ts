@@ -36,6 +36,36 @@ describe.skipIf(!hasTestDb)('🔄 Integração — CRUD admin: Puzzle (lib/puzzl
     expect(row.lichess_id).toBe('unq001');
   });
 
+  test('createPuzzle guarda o nome (e aceita ausência dele)', async () => {
+    const { adminId } = await criarAdmin();
+    const comNome = await puzzlesLib.createPuzzle({
+      nome: '  Garfo da vitória  ',
+      fen: '8/k7/8/8/8/8/7K/8 w - - 0 1', solucao: ['a1a2'], fase: 1, lichessId: 'nome1',
+    }, adminId);
+    expect(comNome.nome).toBe('Garfo da vitória'); // trimado
+
+    const semNome = await puzzlesLib.createPuzzle({
+      fen: '8/k7/8/8/8/8/7K/8 w - - 0 2', solucao: ['a1a3'], fase: 1, lichessId: 'nome2',
+    }, adminId);
+    expect(semNome.nome).toBeNull();
+  });
+
+  test('listPuzzlesAtivos devolve só os ativos', async () => {
+    const { adminId } = await criarAdmin();
+    const ativo = await puzzlesLib.createPuzzle({
+      nome: 'Ativo', fen: '8/k7/8/8/8/8/7K/8 w - - 0 1', solucao: ['a1a2'], fase: 1, lichessId: 'at',
+    }, adminId);
+    const inativo = await puzzlesLib.createPuzzle({
+      nome: 'Inativo', fen: '8/k7/8/8/8/8/7K/8 w - - 0 2', solucao: ['a1a3'], fase: 1, lichessId: 'in',
+    }, adminId);
+    await puzzlesLib.updatePuzzle(inativo.id, { ativo: false });
+
+    const lista = await puzzlesLib.listPuzzlesAtivos();
+    const ids = lista.map((p) => p.id);
+    expect(ids).toContain(ativo.id);
+    expect(ids).not.toContain(inativo.id);
+  });
+
   test('listAllPuzzles devolve em ordem decrescente de criação', async () => {
     const { adminId } = await criarAdmin();
     await puzzlesLib.createPuzzle({
@@ -67,6 +97,21 @@ describe.skipIf(!hasTestDb)('🔄 Integração — CRUD admin: Puzzle (lib/puzzl
     }, adminId);
     expect(await puzzlesLib.deletePuzzle(row.id)).toBe(true);
     expect(await puzzlesLib.findPuzzleById(row.id)).toBeNull();
+  });
+
+  test('deletePuzzle devolve false para id inexistente', async () => {
+    expect(await puzzlesLib.deletePuzzle('00000000-0000-0000-0000-000000000000')).toBe(false);
+  });
+
+  test('updatePuzzle sem campos devolve a linha inalterada', async () => {
+    const { adminId } = await criarAdmin();
+    const row = await puzzlesLib.createPuzzle({
+      nome: 'Sem mudanças', fen: '8/k7/8/8/8/8/7K/8 w - - 0 1',
+      solucao: ['a1a2'], fase: 1, lichessId: 'noop',
+    }, adminId);
+    const upd = await puzzlesLib.updatePuzzle(row.id, {});
+    expect(upd?.id).toBe(row.id);
+    expect(upd?.nome).toBe('Sem mudanças');
   });
 
   test('UNIQUE em lichess_id dispara 23505', async () => {

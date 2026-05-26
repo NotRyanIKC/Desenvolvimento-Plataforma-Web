@@ -50,6 +50,14 @@ export function validateSenha(senha: unknown): string | null {
 
 const NIVEIS_DIFICULDADE = ['facil', 'medio', 'dificil'];
 
+export function validatePuzzleNome(nome: unknown): string | null {
+  if (typeof nome !== 'string') return 'Nome do puzzle inválido.';
+  const trimmed = nome.trim();
+  if (trimmed.length < 2) return 'Nome do puzzle deve ter no mínimo 2 caracteres.';
+  if (trimmed.length > 120) return 'Nome do puzzle deve ter no máximo 120 caracteres.';
+  return null;
+}
+
 export function validateFen(fen: unknown): string | null {
   if (typeof fen !== 'string') return 'FEN inválido.';
   const trimmed = fen.trim();

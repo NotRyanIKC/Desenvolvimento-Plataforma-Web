@@ -70,11 +70,12 @@ envolvidos por `withRequestLog(...)` no `export default`.
 |---|---|---|---|
 | GET | `/api/admin/users` | `api/admin/users.ts` | **admin** |
 
-### 1.8 Proxy do Lichess
+### 1.8 Puzzles públicos (proxy Lichess + catálogo dos mestres)
 
 | Método | Rota | Arquivo | Auth |
 |---|---|---|---|
 | GET | `/api/puzzles/[id]` | `api/puzzles/[id].ts` | pública (proxy Lichess) |
+| GET | `/api/puzzles/mestres` | `api/puzzles/mestres.ts` | pública (catálogo de puzzles ativos) |
 
 O `id` aceita três formas: `daily` (puzzle do dia), `next` (puzzle aleatório —
 aceita `?angle=<tema>` e `?difficulty=<nível>`) ou um ID de puzzle. O proxy já
@@ -82,6 +83,12 @@ devolve o puzzle **convertido** (`{ id, fen, solution, rating, themes }`): a
 conversão PGN→FEN roda no servidor via `lib/puzzleLichess.ts` (chess.js), que
 deriva um FEN jogável em que a solução inteira é legal. Falha ao consultar o
 Lichess retorna **502**.
+
+`GET /api/puzzles/mestres` lista os puzzles **ativos** do catálogo local
+(`listPuzzlesAtivos` em `lib/puzzles.ts`) como `{ puzzles: PuzzleDTO[] }` —
+inclui `solucao` (validação no cliente, mesmo padrão do proxy). Rota estática:
+tem precedência sobre o dinâmico `[id].ts`, então não colide com `/api/puzzles/00008`.
+Alimenta a página "Puzzles dos Mestres".
 
 ### 1.9 Rotas internas
 
@@ -110,6 +117,7 @@ O cliente **nunca** usa `fetch` direto: tudo passa por `src/lib/apiClient.ts`
 | `routes/puzzles/history.tsx` | `api.get` / `api.post` / `api.patch` / `api.delete` | `/api/puzzles/solved` (+ `/[id]`) |
 | `routes/puzzles/[phase].tsx` | (via componente `ComentariosSection`) | `/api/comentarios` (+ `/[id]`) |
 | `routes/puzzles/lichess.tsx` | `api.get` (+ componente `ComentariosSection`) | `GET /api/puzzles/next` (proxy Lichess) e `/api/comentarios` |
+| `routes/puzzles/mestres.tsx` | `api.get` / `api.post` (+ componente `ComentariosSection`) | `GET /api/puzzles/mestres`, `POST /api/puzzles/solved` e `/api/comentarios` |
 | `components/ui/ComentariosSection.tsx` | `api.get` / `api.post` / `api.patch` / `api.delete` | `/api/comentarios` (+ `/[id]`) |
 | `hooks/useAdmin.ts` | `api.get` | `GET /api/users/me` (guarda das telas admin) |
 | `routes/administracao/usuarios.tsx` | `api.get` | `GET /api/admin/users` |
@@ -177,8 +185,9 @@ A rota `/api/_internal/log` é a única que **NÃO** é envolvida em
 
 ## Resumo: contagem de endpoints
 
-- **17 handlers** servindo **24 combinações método+rota**.
+- **18 handlers** servindo **25 combinações método+rota**.
 - **5 CRUDs completos:** Usuário (3), Puzzles Resolvidos (4), Comentários (4),
   Puzzle admin (5), Bot admin (5).
-- **2 endpoints de proxy/integração:** Lichess proxy + sink de log.
+- **3 endpoints de proxy/integração:** Lichess proxy + catálogo de puzzles dos
+  mestres (`/api/puzzles/mestres`) + sink de log.
 - **2 endpoints auxiliares:** log interno + promote-admin (dev-only).

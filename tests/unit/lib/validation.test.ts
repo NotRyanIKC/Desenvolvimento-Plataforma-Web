@@ -24,7 +24,7 @@ describe('🧪 Testes Unitários - Validação de Credenciais (Camada lib)', () 
       expect(validateEmail('player@cesuchess.com')).toBeNull();
     });
 
-    test('Deve recusar e-mail sem caractere "@"', () => {
+    test('Deve recusar e-mail com domínio mal formatado ou incompleto', () => {
       expect(validateEmail('magnuscarlsen.com')).toBe('Formato de e-mail inválido.');
     });
   });

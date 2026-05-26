@@ -5,7 +5,9 @@ código (servidor, cliente e serviços externos) e como são registradas pelo
 sistema de log.
 
 > **Versão:** Sprint 3 (26/05/2026) — atualizado com os 5 CRUDs (Usuário,
-> Puzzles Resolvidos, Puzzle admin, Bot admin, Comentário).
+> Puzzles Resolvidos, Puzzle admin, Bot admin, Comentário) e com os puzzles
+> carregados ao vivo do Lichess (proxy `next`/`daily`/ID + conversão PGN→FEN
+> server-side e página `routes/puzzles/lichess.tsx`).
 >
 > **Fonte de verdade em runtime:** desde a introdução do sistema de log, toda
 > requisição (páginas + API) é gravada em `logs/requests.log` (JSON-lines).
@@ -72,7 +74,14 @@ envolvidos por `withRequestLog(...)` no `export default`.
 
 | Método | Rota | Arquivo | Auth |
 |---|---|---|---|
-| GET | `/api/puzzles/[id]` | `api/puzzles/[id].ts` | pública (proxy Lichess; aceita `daily`) |
+| GET | `/api/puzzles/[id]` | `api/puzzles/[id].ts` | pública (proxy Lichess) |
+
+O `id` aceita três formas: `daily` (puzzle do dia), `next` (puzzle aleatório —
+aceita `?angle=<tema>` e `?difficulty=<nível>`) ou um ID de puzzle. O proxy já
+devolve o puzzle **convertido** (`{ id, fen, solution, rating, themes }`): a
+conversão PGN→FEN roda no servidor via `lib/puzzleLichess.ts` (chess.js), que
+deriva um FEN jogável em que a solução inteira é legal. Falha ao consultar o
+Lichess retorna **502**.
 
 ### 1.9 Rotas internas
 
@@ -100,15 +109,17 @@ O cliente **nunca** usa `fetch` direto: tudo passa por `src/lib/apiClient.ts`
 | `routes/profile.tsx` | `api.get` / `api.patch` / `api.delete` / `api.post` | `/api/users/me`, `POST /api/auth/logout` |
 | `routes/puzzles/history.tsx` | `api.get` / `api.post` / `api.patch` / `api.delete` | `/api/puzzles/solved` (+ `/[id]`) |
 | `routes/puzzles/[phase].tsx` | (via componente `ComentariosSection`) | `/api/comentarios` (+ `/[id]`) |
+| `routes/puzzles/lichess.tsx` | `api.get` (+ componente `ComentariosSection`) | `GET /api/puzzles/next` (proxy Lichess) e `/api/comentarios` |
 | `components/ui/ComentariosSection.tsx` | `api.get` / `api.post` / `api.patch` / `api.delete` | `/api/comentarios` (+ `/[id]`) |
 | `hooks/useAdmin.ts` | `api.get` | `GET /api/users/me` (guarda das telas admin) |
 | `routes/administracao/usuarios.tsx` | `api.get` | `GET /api/admin/users` |
 | `routes/administracao/puzzles.tsx` | `api.get` / `api.post` / `api.patch` / `api.delete` | `/api/admin/puzzles` (+ `/[id]`) |
 | `routes/administracao/bots.tsx` | `api.get` / `api.post` / `api.patch` / `api.delete` | `/api/admin/bots` (+ `/[id]`) |
 
-`routes/puzzles/[phase].tsx` também renderiza dados estáticos de
-`src/data/puzzles.ts` via `usePuzzle`; a chamada ao Lichess fica para uso
-futuro do hook (Sprint posterior).
+`routes/puzzles/[phase].tsx` renderiza dados estáticos de `src/data/puzzles.ts`
+via `usePuzzle` (a trilha de níveis mockada). O consumo **ao vivo** do Lichess
+agora acontece em `routes/puzzles/lichess.tsx`, página separada que busca um
+puzzle pelo proxy e o resolve no tabuleiro (modo livre — não grava histórico).
 
 ---
 
@@ -116,12 +127,15 @@ futuro do hook (Sprint posterior).
 
 | Arquivo | Função | URL externa |
 |---|---|---|
-| `services/lichess.ts` | `fetchPuzzleById(id)` | `GET https://lichess.org/api/puzzle/{id}` |
-| `services/lichess.ts` | `fetchDailyPuzzle()` | `GET https://lichess.org/api/puzzle/daily` |
+| `services/lichess.ts` | `fetchPuzzleById(id)` | `GET https://lichess.org/api/puzzle/{id}` (cache 24h) |
+| `services/lichess.ts` | `fetchDailyPuzzle()` | `GET https://lichess.org/api/puzzle/daily` (cache 1h) |
+| `services/lichess.ts` | `fetchNextPuzzle(angle?, difficulty?)` | `GET https://lichess.org/api/puzzle/next` (sem cache; aceita `?angle`/`?difficulty`) |
 
-Ambas são chamadas **apenas server-side**, a partir do proxy
+As três são chamadas **apenas server-side**, a partir do proxy
 `/api/puzzles/[id]`. Os componentes nunca falam com o Lichess diretamente
-(respeita o rate-limit de 1 req/s e mantém o cache do `fetch` no servidor).
+(respeita o rate-limit de 1 req/s e mantém o cache do `fetch` no servidor). A
+resposta crua (`{ game, puzzle }`) é convertida em `lib/puzzleLichess.ts` antes
+de chegar ao cliente.
 
 ---
 

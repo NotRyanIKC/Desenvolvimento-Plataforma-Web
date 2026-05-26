@@ -133,160 +133,127 @@
   margin: 0;
 }
 
-/* ─── Fase ativa ─────────────────────────────────────────── */
-.activePhase {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  background: var(--bg-card);
-  border: 1px solid rgba(59,130,246,0.3);
-  border-radius: 16px;
-  padding: 28px 32px;
-  overflow: hidden;
-}
-
-.activeLeft {
-  flex: 1;
+/* ─── Trilha de níveis (seletor estilo jogo) ─────────────── */
+.trail {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.activeBadge {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 500;
-  padding: 4px 12px;
-  border-radius: 20px;
-  background: rgba(37,99,235,0.15);
-  color: #93c5fd;
-  border: 1px solid rgba(59,130,246,0.2);
-  width: fit-content;
-}
-
-.activeTitle {
-  font-family: 'Playfair Display', 'Georgia', serif;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0;
-}
-
-.activeDesc {
-  font-size: 14px;
-  color: var(--muted-l);
-  margin: 0;
-  line-height: 1.6;
-}
-
-.btnStart {
-  display: inline-flex;
   align-items: center;
-  padding: 11px 24px;
-  border-radius: 10px;
-  background: var(--blue-d);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  width: fit-content;
-  transition: background 0.15s, transform 0.1s;
-}
-.btnStart:hover {
-  background: var(--blue-dd);
-  transform: translateY(-1px);
+  gap: 26px;
+  padding: 24px 0 8px;
 }
 
-/* Mini tabuleiro decorativo */
-.activeBoard {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  width: 160px;
-  height: 160px;
-  flex-shrink: 0;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  opacity: 0.6;
+/* Caminho tracejado central ligando os níveis */
+.trail::before {
+  content: '';
+  position: absolute;
+  top: 48px;
+  bottom: 70px;
+  left: 50%;
+  width: 0;
+  border-left: 3px dashed rgba(59,130,246,0.22);
+  transform: translateX(-1.5px);
+  z-index: 0;
 }
 
-.cell { aspect-ratio: 1; }
-.cellLight { background: #c8d9f0; }
-.cellDark  { background: #2d4a7a; }
-
-/* ─── Grade de fases ─────────────────────────────────────── */
-.phasesGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-}
-
-.phaseCard {
+.level {
+  position: relative;
+  z-index: 1;
   display: flex;
+  justify-content: center;
+  will-change: transform;
+}
+
+.levelLink {
+  display: block;
+  text-decoration: none;
+}
+
+.levelInner {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 16px 18px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  transition: border-color 0.15s, background 0.15s;
+  gap: 8px;
 }
 
-.phaseOpen {
-  background: var(--bg-card);
-  cursor: pointer;
-}
-.phaseOpen:hover {
-  border-color: rgba(59,130,246,0.4);
-  background: var(--bg-card-h);
-}
-
-.phaseLocked {
-  background: rgba(26,34,53,0.4);
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.phaseNumber {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: rgba(37,99,235,0.15);
-  color: #93c5fd;
-  font-size: 15px;
-  font-weight: 700;
+/* Botão circular do nível */
+.node {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-size: 30px;
+  font-weight: 700;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
 }
 
-.phaseInfo {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+/* Nível atual / desbloqueado */
+.nodeOpen {
+  background: linear-gradient(135deg, var(--blue), var(--blue-dd));
+  color: #fff;
+  border: 3px solid rgba(147,197,253,0.6);
+  box-shadow: 0 0 0 6px rgba(59,130,246,0.12), 0 10px 28px rgba(37,99,235,0.45);
+  animation: nodePulse 2.2s ease-in-out infinite;
+}
+.levelLink:hover .nodeOpen { transform: scale(1.06); }
+
+@keyframes nodePulse {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(59,130,246,0.12), 0 10px 28px rgba(37,99,235,0.45); }
+  50%      { box-shadow: 0 0 0 13px rgba(59,130,246,0.04), 0 10px 28px rgba(37,99,235,0.55); }
 }
 
-.phaseTitle {
-  font-size: 13px;
+/* Níveis bloqueados */
+.nodeLocked {
+  background: var(--bg-card);
+  color: var(--muted);
+  border: 2px solid var(--border);
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.lock { font-size: 26px; }
+
+/* Legenda abaixo do node */
+.levelLabel {
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text);
+  color: var(--muted-l);
+}
+.levelLink:hover .levelLabel { color: var(--text); }
+
+/* Estrelas — vibe de jogo */
+.stars {
+  display: flex;
+  gap: 3px;
+  font-size: 14px;
+  color: #fbbf24;
+  line-height: 1;
 }
 
-.phaseCount {
-  font-size: 11px;
-  color: var(--muted);
-}
+/* ─── Node final "mais puzzles em breve" ─────────────────── */
+.soonLink { cursor: default; }
 
-.phaseArrow {
-  font-size: 16px;
-  color: var(--muted);
-  text-decoration: none;
-  transition: color 0.15s, transform 0.15s;
-}
-.phaseCard:hover .phaseArrow {
+.nodeSoon {
+  background: transparent;
+  border: 3px dashed rgba(59,130,246,0.35);
   color: var(--blue);
-  transform: translateX(3px);
+  opacity: 0.85;
+}
+
+.soonIcon {
+  font-size: 36px;
+  font-weight: 300;
+  color: #93c5fd;
+  line-height: 1;
+}
+
+.soonLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
 }
 
 /* ─── Divider ────────────────────────────────────────────── */
@@ -331,8 +298,6 @@
   .nav { padding: 14px 20px; }
   .main { padding: 36px 20px 48px; }
   .title { font-size: 32px; }
-  .activePhase { flex-direction: column; padding: 24px 20px; }
-  .activeBoard { width: 100%; height: auto; aspect-ratio: 1; }
-  .phasesGrid { grid-template-columns: 1fr 1fr; }
+  .node { width: 72px; height: 72px; font-size: 26px; }
   .hint { flex-direction: column; align-items: flex-start; }
 }

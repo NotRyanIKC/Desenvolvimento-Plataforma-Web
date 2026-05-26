@@ -2,12 +2,22 @@ import React from 'react';
 import Link from 'next/link';
 import styles from '@/styles/Puzzles.module.css';
 
-const PUZZLE_PHASES = Array.from({ length: 10 }, (_, i) => ({
-  phase: i + 1,
-  title: `Fase ${i + 1}`,
-  count: 10,
-  locked: i > 0,
+const TOTAL_NIVEIS = 10;
+
+// Trilha de níveis no estilo seletor de fases de jogo mobile.
+// Hoje só o nível 1 tem puzzle real (src/data/puzzles.ts); os demais
+// ficam bloqueados até haver mais conteúdo cadastrado.
+const NIVEIS = Array.from({ length: TOTAL_NIVEIS }, (_, i) => ({
+  nivel: i + 1,
+  desbloqueado: i === 0,
 }));
+
+// Deslocamento horizontal suave pra dar o aspecto de trilha sinuosa.
+// Mantido menor que o raio do node (40px) pra cada node continuar tocando
+// a linha tracejada central.
+function weave(i: number): number {
+  return Math.round(Math.sin(i * 0.7) * 34);
+}
 
 export default function Puzzles() {
   return (
@@ -32,58 +42,72 @@ export default function Puzzles() {
         <div className={styles.header}>
           <h1 className={styles.title}>Problemas</h1>
           <p className={styles.sub}>
-            Resolva puzzles táticos e evolua fase por fase.
+            Complete os níveis para desbloquear novos desafios táticos.
           </p>
         </div>
 
-        {/* Fase ativa — destaque */}
-        <div className={styles.activePhase}>
-          <div className={styles.activeLeft}>
-            <span className={styles.activeBadge}>Fase atual</span>
-            <h2 className={styles.activeTitle}>Fase 1</h2>
-            <p className={styles.activeDesc}>
-              10 puzzles de nível iniciante para aquecer sua visão tática.
-            </p>
-            <Link href="/routes/puzzles/1" className={styles.btnStart}>
-              Iniciar Fase →
-            </Link>
-          </div>
-          <div className={styles.activeBoard} aria-hidden="true">
-            {Array.from({ length: 64 }).map((_, i) => {
-              const r = Math.floor(i / 8);
-              const c = i % 8;
-              const isLight = (r + c) % 2 === 0;
-              return (
+        {/* Trilha de níveis */}
+        <div className={styles.trail}>
+          {NIVEIS.map((n, i) => {
+            const conteudo = (
+              <div className={styles.levelInner}>
                 <div
-                  key={i}
-                  className={`${styles.cell} ${isLight ? styles.cellLight : styles.cellDark}`}
-                />
-              );
-            })}
-          </div>
-        </div>
+                  className={`${styles.node} ${
+                    n.desbloqueado ? styles.nodeOpen : styles.nodeLocked
+                  }`}
+                >
+                  {n.desbloqueado ? n.nivel : <span className={styles.lock}>🔒</span>}
+                </div>
+                <span className={styles.levelLabel}>
+                  {n.desbloqueado ? 'Começar' : `Nível ${n.nivel}`}
+                </span>
+                {n.desbloqueado && (
+                  <div className={styles.stars} aria-hidden="true">
+                    <span>☆</span>
+                    <span>☆</span>
+                    <span>☆</span>
+                  </div>
+                )}
+              </div>
+            );
 
-        {/* Grade de fases */}
-        <div className={styles.phasesGrid}>
-          {PUZZLE_PHASES.map((p) => (
-            <div
-              key={p.phase}
-              className={`${styles.phaseCard} ${p.locked ? styles.phaseLocked : styles.phaseOpen}`}
-            >
-              <div className={styles.phaseNumber}>
-                {p.locked ? '🔒' : p.phase}
+            return (
+              <div
+                key={n.nivel}
+                className={styles.level}
+                style={{ transform: `translateX(${weave(i)}px)` }}
+              >
+                {n.desbloqueado ? (
+                  <Link href={`/routes/puzzles/${n.nivel}`} className={styles.levelLink}>
+                    {conteudo}
+                  </Link>
+                ) : (
+                  <div
+                    className={styles.levelLink}
+                    aria-disabled="true"
+                    title="Bloqueado"
+                  >
+                    {conteudo}
+                  </div>
+                )}
               </div>
-              <div className={styles.phaseInfo}>
-                <span className={styles.phaseTitle}>{p.title}</span>
-                <span className={styles.phaseCount}>{p.count} puzzles</span>
+            );
+          })}
+
+          {/* Node final — mais conteúdo a caminho */}
+          <div
+            className={styles.level}
+            style={{ transform: `translateX(${weave(TOTAL_NIVEIS)}px)` }}
+          >
+            <div className={`${styles.levelLink} ${styles.soonLink}`} aria-disabled="true">
+              <div className={styles.levelInner}>
+                <div className={`${styles.node} ${styles.nodeSoon}`}>
+                  <span className={styles.soonIcon}>+</span>
+                </div>
+                <span className={styles.soonLabel}>Mais puzzles em breve</span>
               </div>
-              {!p.locked && (
-                <Link href={`/routes/puzzles/${p.phase}`} className={styles.phaseArrow}>
-                  →
-                </Link>
-              )}
             </div>
-          ))}
+          </div>
         </div>
 
         <div className={styles.divider} />

@@ -77,3 +77,32 @@ export async function fetchDailyPuzzle(): Promise<LichessPuzzleResponse> {
 
   return res.json() as Promise<LichessPuzzleResponse>;
 }
+
+/**
+ * Busca um próximo puzzle do Lichess (aleatório), opcionalmente filtrado por
+ * tema (`angle`) e dificuldade. Funciona sem token. Sem cache, pois queremos
+ * um puzzle novo a cada chamada. Chamada server-side apenas.
+ */
+export async function fetchNextPuzzle(
+  angle?: string,
+  difficulty?: string
+): Promise<LichessPuzzleResponse> {
+  const params = new URLSearchParams();
+  if (angle) params.set('angle', angle);
+  if (difficulty) params.set('difficulty', difficulty);
+  const qs = params.toString();
+
+  const res = await fetch(
+    `${LICHESS_BASE}/puzzle/next${qs ? `?${qs}` : ''}`,
+    {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Lichess API error: ${res.status} ao buscar próximo puzzle`);
+  }
+
+  return res.json() as Promise<LichessPuzzleResponse>;
+}

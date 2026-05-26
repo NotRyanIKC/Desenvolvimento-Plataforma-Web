@@ -32,6 +32,7 @@ export default function Puzzles() {
           </span>
         </Link>
         <div className={styles.navLinks}>
+          <Link href="/routes/puzzles/lichess" className={styles.navLink}>Puzzles do Lichess</Link>
           <Link href="/routes/play" className={styles.navLink}>Jogar</Link>
           <Link href="/routes/login" className={styles.navLink}>Entrar</Link>
           <Link href="/routes/register" className={styles.btnPrimary}>Criar Conta</Link>

@@ -12,6 +12,11 @@
 
 # testing
 /coverage
+/playwright-report
+/test-results
+/reports/*
+!/reports/.gitkeep
+!/reports/README.md
 
 # logs de requisição (sistema de log)
 /logs

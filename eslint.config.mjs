@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Arquivos gerados — não fazem parte do código-fonte:
+    "coverage/**",
+    "playwright-report/**",
+    "test-results/**",
+    "reports/**",
   ]),
 ]);
 

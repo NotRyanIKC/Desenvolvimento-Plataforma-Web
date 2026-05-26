@@ -93,6 +93,29 @@ export function validateNivelDificuldade(nivel: unknown): string | null {
   return null;
 }
 
+/* ─── Validação de Comentários (UC-16, UC-18) ────────────── */
+
+const COMENTARIO_MIN = 1;
+const COMENTARIO_MAX = 1000;
+
+export function validateComentarioTexto(texto: unknown): string | null {
+  if (typeof texto !== 'string') return 'Texto do comentário inválido.';
+  const trimmed = texto.trim();
+  if (trimmed.length < COMENTARIO_MIN)
+    return 'O comentário não pode estar vazio.';
+  if (trimmed.length > COMENTARIO_MAX)
+    return `O comentário deve ter no máximo ${COMENTARIO_MAX} caracteres.`;
+  return null;
+}
+
+export function validatePuzzleLichessId(id: unknown): string | null {
+  if (typeof id !== 'string') return 'ID do puzzle inválido.';
+  const trimmed = id.trim();
+  if (trimmed.length < 1 || trimmed.length > 40)
+    return 'ID do puzzle deve ter de 1 a 40 caracteres.';
+  return null;
+}
+
 /**
  * Roda uma sequência de validações e devolve o primeiro erro encontrado,
  * ou null se todas passarem.

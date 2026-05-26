@@ -53,17 +53,11 @@ O resultado é uma aplicação completa, com tabuleiro interativo, validação d
 
 - 👤 **Cadastro de usuário** com validação de e-mail, username, sobrenome e senha (mínimo 8 caracteres) — cria automaticamente o par `usuario` + `jogador` em uma única transação.
 - 🔐 **Login por e-mail OU username** + senha, com **sessão por cookie httpOnly assinado (HMAC-SHA256)**.
-- 🪪 **Perfil do usuário** (`/routes/profile`) com **CRUD completo**:
-  - **Read** — exibe nome, sobrenome, username, e-mail e data de criação.
-  - **Update** — edição de dados pessoais e troca de senha (exige senha atual para alterar e-mail/senha, por segurança).
-  - **Delete** — exclusão da conta, que cascateia para `jogador`, `puzzles_resolvidos` e demais agregados.
-- 📚 **Histórico de Puzzles** (`/routes/puzzles/history`) com **CRUD completo**:
-  - **Create** — registrar um puzzle resolvido (ID do Lichess, fase, rating, tentativas, anotação).
-  - **Read** — listar todos os puzzles que o usuário resolveu, mais recentes primeiro.
-  - **Update** — editar anotação, acerto e número de tentativas.
-  - **Delete** — remover um registro do histórico.
+- 🛡️ **Modo administrador** com guard `requireAdmin`, exclusivo para usuários presentes na tabela `admin`. As rotas `/api/admin/*` retornam **401** sem sessão e **403** quando a sessão não é de admin.
+- 💬 **Comentários em puzzles** — qualquer usuário autenticado pode publicar comentários em qualquer puzzle (UC-16). Edição e exclusão são restritas ao autor (UC-18, UC-19). Visualização é aberta a anônimos (UC-17).
 - 🔌 **Integração com a API pública do Lichess** isolada em `src/services/lichess.ts` e exposta ao cliente apenas via proxy server-side (`/api/puzzles/[id]`).
-- 🗄️ **Persistência em PostgreSQL** com modelagem completa baseada em ferramenta CASE (BRModeler), incluindo 9 entidades do domínio + tabela auxiliar `puzzles_resolvidos`.
+- 🗄️ **Persistência em PostgreSQL** com modelagem completa baseada em ferramenta CASE (BRModeler), 11 tabelas + 3 enums + triggers (`usuario`, `admin`, `jogador`, `bot`, `partida`, `lance`, `puzzle`, `tentativa_puzzle`, `progresso_puzzle`, `puzzles_resolvidos`, `comentario`).
+- 🧪 **Suíte de testes em três níveis** (Sprint 3) — unitários (Vitest), integração contra Postgres real, E2E em browser real (Playwright). Cobertura de código com meta de 70–80%. Veja [Testes](#-testes).
 
 ### Em escopo do projeto, ainda em desenvolvimento
 
@@ -169,6 +163,25 @@ Para evitar chamadas diretas do cliente ao Lichess (e respeitar o rate limit), o
 | `POST` | `/api/puzzles/solved` | Registra (upsert) um puzzle como resolvido. |
 | `PATCH` | `/api/puzzles/solved/[id]` | Atualiza anotação, acerto ou tentativas. |
 | `DELETE` | `/api/puzzles/solved/[id]` | Remove um registro do histórico. |
+
+#### Comentários em puzzles (Sprint 3, CRUD)
+
+| Método | Endpoint | Auth | Função |
+|---|---|---|---|
+| `GET` | `/api/comentarios?puzzleId=X` | pública | UC-17: lista comentários de um puzzle. Quando logado, marca `pertenceAoLeitor`. |
+| `POST` | `/api/comentarios` | sessão | UC-16: publica um comentário (body: `{puzzleLichessId, texto}`). |
+| `PATCH` | `/api/comentarios/[id]` | sessão (autor) | UC-18: edita o próprio comentário. |
+| `DELETE` | `/api/comentarios/[id]` | sessão (autor) | UC-19: exclui o próprio comentário. |
+
+#### Catálogo de Puzzles e Bots (Admin — Sprint 3, CRUD completo)
+
+| Método | Endpoint | Função |
+|---|---|---|
+| `GET / POST` | `/api/admin/puzzles` | Lista todos ou cria um puzzle no catálogo. |
+| `GET / PATCH / DELETE` | `/api/admin/puzzles/[id]` | Lê, atualiza ou remove um puzzle do catálogo. |
+| `GET / POST` | `/api/admin/bots` | Lista todos ou cria um bot. |
+| `GET / PATCH / DELETE` | `/api/admin/bots/[id]` | Lê, atualiza ou remove um bot. |
+| `GET` | `/api/admin/users` | Lista todos os usuários da plataforma. |
 
 #### Proxy do Lichess
 
@@ -331,46 +344,71 @@ No diretório do projeto, você pode rodar:
 | `npm run build` | Gera o build de produção otimizado em `.next/`. |
 | `npm run start` | Inicia o servidor com a build de produção (executar `build` antes). |
 | `npm run lint` | Executa o ESLint em todos os arquivos do projeto. |
+| `npm run lint:report` | Gera `reports/eslint-report.html` (análise estática para apresentação). |
 | `npm test` | Executa o Vitest em modo *watch* (reexecuta os testes a cada alteração). |
 | `npm run test:run` | Executa toda a suíte de testes uma única vez (útil para CI). |
+| `npm run test:coverage` | Roda os testes e gera o relatório de cobertura HTML em `coverage/`. |
+| `npm run test:e2e` | Roda a suíte E2E do Playwright (sobe o dev server em `:3001`). |
+| `npm run test:e2e:ui` | Roda os E2E em modo interativo (Playwright UI). |
 
 ---
 
 ## 🧪 Testes
 
-O CesuChess usa **[Vitest](https://vitest.dev/)** como runner único de testes — mesma API estilo Jest (`describe` / `test` / `expect`), porém com suporte nativo a TypeScript e execução muito mais rápida via Vite. Não há configuração extra: o Vitest descobre automaticamente arquivos `*.test.ts` em todo o projeto.
+O CesuChess tem suíte de testes **nos três níveis exigidos pelo Sprint 3** — unitários, integração e end-to-end — usando duas ferramentas:
 
-### Organização
+| Nível | Ferramenta | Local | Cobre |
+|---|---|---|---|
+| **Unitários** | [Vitest](https://vitest.dev/) | `tests/unit/**/*.test.ts` | Funções puras: `validation`, `chessEngine`, `session`, `users.hashSenha`. |
+| **Integração** | [Vitest](https://vitest.dev/) + Postgres | `tests/integration/**/*.test.ts` | Repositórios contra `BancoVersao2034_test`: `users`, `comentarios`, `puzzlesResolvidos`, `puzzles` (admin), `bots` (admin) + proxy Lichess. |
+| **End-to-End** | [Playwright](https://playwright.dev/) | `tests/e2e/**/*.spec.ts` | Fluxos completos no browser: auth, perfil, histórico de puzzles, admin (puzzles/bots), comentários. |
 
-A suíte é dividida em duas camadas, posicionadas conforme a natureza do teste:
-
-| Camada | Local | Objetivo |
-|---|---|---|
-| **Unitários** | `tests/unit/**/*.test.ts` | Validar funções puras da camada de domínio/infra (ex.: validação de e-mail, senha, username). A árvore dentro de `tests/unit/` espelha a árvore dentro de `src/`. |
-| **Integração** | `tests/integration/**/*.test.ts` | Validar fluxos que cruzam fronteiras (serviços externos, banco, proxies). A árvore dentro de `tests/integration/` espelha a árvore dentro de `src/`. |
-
-### Cobertura atual (Sprint 2)
-
-- **`tests/unit/lib/validation.test.ts`** — 16 casos cobrindo `validateEmail`, `validateSenha`, `validateNome`, `validateSobrenome`, `validateUsername` e `firstError`.
-- **`tests/integration/services/lichess.test.ts`** — smoke test do proxy do Lichess via `fetchPuzzleById('daily')`, com fallback gracioso para rate limit.
-
-### Como rodar
+### Quick start
 
 ```bash
-# modo watch (re-executa ao salvar)
-npm test
+# Unitários + integração (Vitest)
+npm test               # modo watch
+npm run test:run       # uma passada (CI)
+npm run test:coverage  # gera relatório HTML em coverage/
 
-# uma única passada (CI, pré-commit)
-npm run test:run
+# End-to-end (Playwright) — uma vez:
+npx playwright install
+# Depois:
+npm run test:e2e
+npm run test:e2e:ui    # modo interativo
 ```
 
-Saída esperada na suíte atual: **2 arquivos, 17 testes, todos passando**.
+### Pré-requisito para integração e E2E
+
+Os testes que tocam o banco usam um Postgres SEPARADO (`BancoVersao2034_test`), pra não contaminar dados de desenvolvimento. Crie uma vez:
+
+```bash
+createdb -U postgres BancoVersao2034_test
+psql -U postgres -d BancoVersao2034_test -f DB/schema.sql
+```
+
+Configure `TEST_DATABASE_URL` no `.env.local` (já vem no `.env.local.example`):
+
+```bash
+TEST_DATABASE_URL=postgres://postgres:SUA_SENHA@localhost:5432/BancoVersao2034_test
+```
+
+### Cobertura de código (Sprint 3)
+
+O `npm run test:coverage` usa `@vitest/coverage-v8` e gera relatório em `coverage/index.html`. A configuração (em `vitest.config.ts`) tem thresholds de **70%** linhas/funções, **65%** branches, mirando o objetivo de 70–80% definido para o Sprint 3.
+
+Inclui: `src/lib/**`, `src/services/**`. Exclui wrappers de logging.
+
+### Casos de teste rastreáveis
+
+Cada teste tem um identificador `CT-XX` referenciado em [`Docs/CesuChess_Casos_de_Teste.docx`](Docs/CesuChess_Casos_de_Teste.docx) — 41 casos no total (16 unit Sprint 2 + 1 integração Lichess + 9 unit Sprint 3 + 8 integração novos + 7 E2E).
 
 ### Convenções
 
-- **Suíte centralizada em `tests/`**: nenhum `*.test.ts` mora junto ao código de produção. Unitários ficam em `tests/unit/<caminho-do-módulo>.test.ts` e integração em `tests/integration/<caminho-do-módulo>.test.ts`, espelhando a árvore de `src/`. Isso mantém o código de produção limpo e deixa óbvio o que é puro vs. o que cruza fronteiras.
-- **Pasta dedicada para integração**: `tests/integration/` agrupa testes que dependem de I/O externo (rede, banco, sistema de arquivos), tornando explícito o que não é puro.
-- **Sem mocks de banco em testes unitários**: funções que tocam o PostgreSQL são testadas via integração contra um banco real configurado em `.env.local`, evitando divergência entre mock e produção.
+- **Suíte centralizada em `tests/`** — nenhum `*.test.ts` mora junto ao código de produção. A árvore espelha `src/`.
+- **Banco de teste separado** — testes de integração e E2E usam `BancoVersao2034_test` via `TEST_DATABASE_URL`, evitando colisão com `BancoVersao2034` (desenvolvimento).
+- **Sem mocks de banco em integração** — bate em Postgres de verdade, com `resetDatabase()` no `beforeEach`. Garante que o que passa no teste vai passar em produção.
+- **Playwright single-worker** — testes E2E rodam em série (`workers: 1`) porque compartilham o mesmo schema. Trade-off consciente: integração simples vs. paralelismo.
 
 ---
 

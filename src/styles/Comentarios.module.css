@@ -1,0 +1,179 @@
+/* Comentarios.module.css — seção de comentários em puzzles (UC-16..19) */
+
+.section {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 24px;
+  margin-top: 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #e8e8f0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.count {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c8cff;
+  background: rgba(108,140,255,0.12);
+  border: 1px solid rgba(108,140,255,0.3);
+}
+
+/* Composer (publicar novo) */
+.composer { margin-bottom: 18px; }
+.textarea {
+  width: 100%;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #e8e8f0;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px 14px;
+  resize: vertical;
+  min-height: 80px;
+  box-sizing: border-box;
+}
+.textarea:focus { outline: none; border-color: #6c8cff; }
+.textarea:disabled { opacity: 0.5; }
+
+.composerFoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+.charCount {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+}
+
+.btnPrimary {
+  background: #6c8cff;
+  color: #0a0a0f;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+.btnPrimary:hover:not(:disabled) { filter: brightness(1.1); }
+.btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Lista */
+.lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.item {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.itemHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.autor {
+  font-weight: 600;
+  font-size: 14px;
+  color: #e8e8f0;
+}
+.username {
+  font-weight: 400;
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+}
+.data {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+}
+.editadoTag {
+  font-style: italic;
+}
+.texto {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(255,255,255,0.85);
+  white-space: pre-wrap;
+}
+
+/* Ações por item */
+.itemActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.btnSmall {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #e8e8f0;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btnSmall:hover:not(:disabled) {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.2);
+}
+.btnSmall:disabled { opacity: 0.5; cursor: not-allowed; }
+.btnDanger {
+  background: rgba(255,133,133,0.1);
+  border-color: rgba(255,133,133,0.3);
+  color: #ff8585;
+}
+.btnDanger:hover:not(:disabled) { background: rgba(255,133,133,0.18); }
+.btnGhost {
+  background: transparent;
+}
+
+.editArea {
+  margin-top: 4px;
+}
+.editActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.empty {
+  text-align: center;
+  color: rgba(255,255,255,0.5);
+  padding: 32px 0;
+  font-size: 14px;
+}
+
+.msgErr {
+  color: #ff8585;
+  font-size: 13px;
+  margin: 8px 0 0;
+}

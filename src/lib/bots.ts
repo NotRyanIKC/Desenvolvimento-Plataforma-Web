@@ -63,3 +63,63 @@ export async function createBot(
   );
   return rows[0];
 }
+
+/** Lista todos os bots (mais recentes primeiro). */
+export async function listAllBots(): Promise<BotRow[]> {
+  const { rows } = await query<BotRow>(
+    'SELECT * FROM bot ORDER BY criado_em DESC'
+  );
+  return rows;
+}
+
+export async function findBotById(id: string): Promise<BotRow | null> {
+  const { rows } = await query<BotRow>('SELECT * FROM bot WHERE id = $1', [id]);
+  return rows[0] ?? null;
+}
+
+export interface UpdateBotInput {
+  nome?: string;
+  nivelDificuldade?: NivelDificuldade;
+  descricao?: string | null;
+  ativo?: boolean;
+}
+
+export async function updateBot(
+  id: string,
+  input: UpdateBotInput
+): Promise<BotRow | null> {
+  const sets: string[] = [];
+  const params: unknown[] = [];
+  let idx = 1;
+
+  if (input.nome !== undefined) {
+    sets.push(`nome = $${idx++}`);
+    params.push(input.nome.trim());
+  }
+  if (input.nivelDificuldade !== undefined) {
+    sets.push(`nivel_dificuldade = $${idx++}`);
+    params.push(input.nivelDificuldade);
+  }
+  if (input.descricao !== undefined) {
+    sets.push(`descricao = $${idx++}`);
+    params.push(input.descricao);
+  }
+  if (input.ativo !== undefined) {
+    sets.push(`ativo = $${idx++}`);
+    params.push(input.ativo);
+  }
+
+  if (sets.length === 0) return findBotById(id);
+
+  params.push(id);
+  const { rows } = await query<BotRow>(
+    `UPDATE bot SET ${sets.join(', ')} WHERE id = $${idx} RETURNING *`,
+    params
+  );
+  return rows[0] ?? null;
+}
+
+export async function deleteBot(id: string): Promise<boolean> {
+  const { rowCount } = await query('DELETE FROM bot WHERE id = $1', [id]);
+  return (rowCount ?? 0) > 0;
+}

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ChessBoard from '@/components/ui/ChessBoard';
+import ComentariosSection from '@/components/ui/ComentariosSection';
 import { usePuzzle } from '@/hooks/usePuzzles';
 import styles from '@/styles/PuzzlePhase.module.css';
 
@@ -49,9 +50,7 @@ export default function PuzzlePhase() {
           </span>
         </Link>
         <div className={styles.navLinks}>
-          <Link href="/routes/puzzles" className={styles.navLink}>
-            ← Problemas
-          </Link>
+          <Link href="/routes/puzzles" className={styles.navLink}>← Problemas</Link>
           <Link href="/routes/play" className={styles.navLink}>Jogar</Link>
         </div>
       </nav>
@@ -98,6 +97,9 @@ export default function PuzzlePhase() {
             position={puzzle.fen}
             onPieceDrop={() => false}
           />
+
+          {/* UC-16..19: comentários do puzzle */}
+          <ComentariosSection puzzleLichessId={puzzle.id} />
         </div>
       </main>
     </div>

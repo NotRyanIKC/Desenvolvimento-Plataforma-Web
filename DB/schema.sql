@@ -17,6 +17,7 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Limpeza em desenvolvimento (cuidado em produção)
+DROP TABLE IF EXISTS comentario         CASCADE;
 DROP TABLE IF EXISTS puzzles_resolvidos CASCADE;
 DROP TABLE IF EXISTS tentativa_puzzle   CASCADE;
 DROP TABLE IF EXISTS progresso_puzzle   CASCADE;
@@ -212,6 +213,30 @@ CREATE TABLE puzzles_resolvidos (
 CREATE INDEX idx_puzzles_resolvidos_jogador ON puzzles_resolvidos (jogador_id);
 CREATE INDEX idx_puzzles_resolvidos_fase    ON puzzles_resolvidos (fase);
 
+-- ------------------------------------------------------------
+-- COMENTARIO  (Sprint 3 — CRUD de comentários em puzzles)
+--
+-- Um jogador autenticado pode publicar comentários sobre puzzles
+-- (UC-16). Pode visualizar (UC-17), editar (UC-18) e excluir
+-- (UC-19) APENAS seus próprios comentários.
+--
+-- Como o catálogo `puzzle` é opcional (cada jogador pode resolver
+-- puzzles diretamente da API do Lichess sem que o admin tenha
+-- importado o puzzle), `puzzle_lichess_id` é apenas TEXT — não
+-- exigimos FK para o catálogo local.
+-- ------------------------------------------------------------
+DROP TABLE IF EXISTS comentario CASCADE;
+CREATE TABLE comentario (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    jogador_id          UUID NOT NULL REFERENCES jogador(id) ON DELETE CASCADE,
+    puzzle_lichess_id   VARCHAR(40) NOT NULL,
+    texto               TEXT NOT NULL CHECK (length(btrim(texto)) BETWEEN 1 AND 1000),
+    criado_em           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    atualizado_em       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_comentario_puzzle ON comentario (puzzle_lichess_id, criado_em DESC);
+CREATE INDEX idx_comentario_jogador ON comentario (jogador_id);
+
 -- ============================================================
 -- TRIGGERS para manter atualizado_em consistente
 -- ============================================================
@@ -233,4 +258,8 @@ CREATE TRIGGER trg_progresso_puzzle_atualizado_em
 
 CREATE TRIGGER trg_puzzles_resolvidos_atualizado_em
     BEFORE UPDATE ON puzzles_resolvidos
+    FOR EACH ROW EXECUTE FUNCTION set_atualizado_em();
+
+CREATE TRIGGER trg_comentario_atualizado_em
+    BEFORE UPDATE ON comentario
     FOR EACH ROW EXECUTE FUNCTION set_atualizado_em();

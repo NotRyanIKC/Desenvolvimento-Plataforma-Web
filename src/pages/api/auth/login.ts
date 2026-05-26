@@ -16,11 +16,10 @@ import {
   verificarSenha,
 } from '@/lib/users';
 import { setSessionCookie } from '@/lib/session';
+import { withRequestLog } from '@/lib/withRequestLog';
+import { isAdmin } from '@/lib/admin';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Método não permitido.' });
@@ -46,9 +45,12 @@ export default async function handler(
     }
 
     setSessionCookie(res, user.id);
-    return res.status(200).json({ user: toPublicUser(user) });
+    const admin = await isAdmin(user.id);
+    return res.status(200).json({ user: toPublicUser(user), isAdmin: admin });
   } catch (err) {
     console.error('Erro em /api/auth/login:', err);
     return res.status(500).json({ error: 'Erro interno do servidor.' });
   }
 }
+
+export default withRequestLog(handler);

@@ -24,11 +24,9 @@ import {
   validateSobrenome,
   validateUsername,
 } from '@/lib/validation';
+import { withRequestLog } from '@/lib/withRequestLog';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Método não permitido.' });
@@ -77,3 +75,5 @@ export default async function handler(
     return res.status(500).json({ error: 'Erro interno do servidor.' });
   }
 }
+
+export default withRequestLog(handler);

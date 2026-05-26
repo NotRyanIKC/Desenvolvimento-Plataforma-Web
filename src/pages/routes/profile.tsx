@@ -14,12 +14,13 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import styles from '@/styles/Profile.module.css';
-import { api, ApiError, type PublicUser } from '@/lib/apiClient';
+import { api, ApiError, type MeResponse, type PublicUser } from '@/lib/apiClient';
 
 export default function Profile() {
   const router = useRouter();
 
   const [user, setUser] = useState<PublicUser | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [carregando, setCarregando] = useState(true);
 
   /* Form de dados pessoais */
@@ -43,8 +44,9 @@ export default function Profile() {
   useEffect(() => {
     (async () => {
       try {
-        const { user } = await api.get<{ user: PublicUser }>('/api/users/me');
+        const { user, isAdmin } = await api.get<MeResponse>('/api/users/me');
         setUser(user);
+        setIsAdmin(isAdmin);
         setNome(user.nome);
         setSobrenome(user.sobrenome);
         setEmail(user.email);
@@ -194,6 +196,11 @@ export default function Profile() {
           <Link href="/routes/puzzles/history" className={styles.navLink}>
             Histórico
           </Link>
+          {isAdmin && (
+            <Link href="/routes/administracao" className={styles.navLink}>
+              Administração
+            </Link>
+          )}
           <button onClick={logout} className={styles.logout}>
             Sair
           </button>

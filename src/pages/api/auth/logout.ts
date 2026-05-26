@@ -6,11 +6,9 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { clearSessionCookie } from '@/lib/session';
+import { withRequestLog } from '@/lib/withRequestLog';
 
-export default function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Método não permitido.' });
@@ -18,3 +16,5 @@ export default function handler(
   clearSessionCookie(res);
   return res.status(200).json({ ok: true });
 }
+
+export default withRequestLog(handler);

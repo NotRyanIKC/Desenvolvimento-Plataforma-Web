@@ -18,4 +18,4 @@
 
 INSERT INTO admin (usuario_id)
 SELECT id FROM usuario WHERE email = 'admin@exemplo.com'
-ON CONFLICT (usuario_id) DO NO
+ON CONFLICT (usuario_id) DO NOTHING;

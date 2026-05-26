@@ -2,13 +2,13 @@
  * tests/e2e/helpers/dbReset.ts
  *
  * Trunca o banco de teste do Playwright antes/depois das specs.
- * Reusa o mesmo banco BancoVersao2034_test que a integração usa.
+ * Reusa o mesmo banco CesuChess_test que a integração usa.
  */
 import { Pool } from 'pg';
 
 const TEST_URL =
   process.env.TEST_DATABASE_URL ??
-  'postgres://postgres:201005@localhost:5432/BancoVersao2034_test';
+  'postgres://postgres:201005@localhost:5432/CesuChess_test';
 
 let pool: Pool | null = null;
 function getPool(): Pool {

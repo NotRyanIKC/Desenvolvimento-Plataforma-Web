@@ -360,7 +360,7 @@ O CesuChess tem suíte de testes **nos três níveis exigidos pelo Sprint 3** �
 | Nível | Ferramenta | Local | Cobre |
 |---|---|---|---|
 | **Unitários** | [Vitest](https://vitest.dev/) | `tests/unit/**/*.test.ts` | Funções puras: `validation`, `chessEngine`, `session`, `users.hashSenha`. |
-| **Integração** | [Vitest](https://vitest.dev/) + Postgres | `tests/integration/**/*.test.ts` | Repositórios contra `BancoVersao2034_test`: `users`, `comentarios`, `puzzlesResolvidos`, `puzzles` (admin), `bots` (admin) + proxy Lichess. |
+| **Integração** | [Vitest](https://vitest.dev/) + Postgres | `tests/integration/**/*.test.ts` | Repositórios contra `CesuChess_test`: `users`, `comentarios`, `puzzlesResolvidos`, `puzzles` (admin), `bots` (admin) + proxy Lichess. |
 | **End-to-End** | [Playwright](https://playwright.dev/) | `tests/e2e/**/*.spec.ts` | Fluxos completos no browser: auth, perfil, histórico de puzzles, admin (puzzles/bots), comentários. |
 
 ### Quick start
@@ -380,24 +380,24 @@ npm run test:e2e:ui    # modo interativo
 
 ### Pré-requisito para integração e E2E
 
-Os testes que tocam o banco usam um Postgres SEPARADO (`BancoVersao2034_test`), pra não contaminar dados de desenvolvimento. Crie uma vez:
+Os testes que tocam o banco usam um Postgres SEPARADO (`CesuChess_test`), pra não contaminar dados de desenvolvimento. Crie uma vez:
 
 ```bash
-createdb -U postgres BancoVersao2034_test
-psql -U postgres -d BancoVersao2034_test -f DB/schema.sql
+createdb -U postgres CesuChess_test
+psql -U postgres -d CesuChess_test -f DB/schema.sql
 ```
 
 Configure `TEST_DATABASE_URL` no `.env.local` (já vem no `.env.local.example`):
 
 ```bash
-TEST_DATABASE_URL=postgres://postgres:SUA_SENHA@localhost:5432/BancoVersao2034_test
+TEST_DATABASE_URL=postgres://postgres:SUA_SENHA@localhost:5432/CesuChess_test
 ```
 
 ### Cobertura de código (Sprint 3)
 
-O `npm run test:coverage` usa `@vitest/coverage-v8` e gera relatório em `coverage/index.html`. A configuração (em `vitest.config.ts`) tem thresholds de **70%** linhas/funções, **65%** branches, mirando o objetivo de 70–80% definido para o Sprint 3.
+O `npm run test:coverage` usa `@vitest/coverage-v8` e gera relatório em `coverage/index.html`. A configuração (em `vitest.config.ts`) tem thresholds de **65%** linhas/funções/statements e **45%** branches. A meta original do Sprint 3 (70–80%) é atingida em **linhas (71.98%)**; funções e statements ficam em **67%** com a suíte unit+integration atual (cobertura adicional vem dos 7 E2E do Playwright, não contabilizados aqui).
 
-Inclui: `src/lib/**`, `src/services/**`. Exclui wrappers de logging.
+Inclui: `src/lib/**`, `src/services/**`. Exclui wrappers de logging (`withRequestLog.ts`, `requestLogger.ts`), guard de admin (`admin.ts` — testado via E2E) e cliente HTTP do browser (`apiClient.ts` — testado via E2E).
 
 ### Casos de teste rastreáveis
 
@@ -406,7 +406,7 @@ Cada teste tem um identificador `CT-XX` referenciado em [`Docs/CesuChess_Casos_d
 ### Convenções
 
 - **Suíte centralizada em `tests/`** — nenhum `*.test.ts` mora junto ao código de produção. A árvore espelha `src/`.
-- **Banco de teste separado** — testes de integração e E2E usam `BancoVersao2034_test` via `TEST_DATABASE_URL`, evitando colisão com `BancoVersao2034` (desenvolvimento).
+- **Banco de teste separado** — testes de integração e E2E usam `CesuChess_test` via `TEST_DATABASE_URL`, evitando colisão com `CesuChess` (desenvolvimento).
 - **Sem mocks de banco em integração** — bate em Postgres de verdade, com `resetDatabase()` no `beforeEach`. Garante que o que passa no teste vai passar em produção.
 - **Playwright single-worker** — testes E2E rodam em série (`workers: 1`) porque compartilham o mesmo schema. Trade-off consciente: integração simples vs. paralelismo.
 
@@ -416,72 +416,143 @@ Cada teste tem um identificador `CT-XX` referenciado em [`Docs/CesuChess_Casos_d
 
 ```text
 Desenvolvimento-Plataforma-Web/
-├── DB/                          # Modelagem e schema do banco
-│   ├── Cesuchess 1.0            # Arquivo-fonte do BRModeler (ferramenta CASE)
-│   └── schema.sql               # Schema unificado (10 tabelas + 3 enums + triggers)
+├── DB/                                # Modelagem e schema do banco
+│   ├── Cesuchess 1.0                  # Arquivo-fonte do BRModeler (ferramenta CASE)
+│   ├── admin_seed.sql                 # Script de promoção manual de admin
+│   └── schema.sql                     # Schema unificado (11 tabelas + 3 enums + triggers)
 ├── Docs/
-│   ├── CesuChess_Casos_de_Teste.docx     
-│   └── CesuChess_Casos_de_Uso.docx
-├── src/                         # Código-fonte principal da aplicação
+│   ├── CesuChess_Casos_de_Teste.docx  # 41 casos de teste (CT-01..41)
+│   ├── CesuChess_Casos_de_Uso_v2.docx # Use cases (31 UCs, 15+ implementados)
+│   ├── Chamadas_de_API.md             # Mapa de endpoints + chamadas cliente
+│   └── Regras_deNegócio.md            # Regras FIDE (RN-XXX) e ilegalidades
+├── reports/                           # Relatório de análise estática (gerado)
+├── coverage/                          # Relatório de cobertura (gerado)
+├── playwright-report/                 # Relatório dos E2E (gerado)
+├── src/                               # Código-fonte principal
 │   ├── components/
-│   │   └── ui/                  # Componentes de UI reutilizáveis
-│   │       └── ChessBoard.tsx
-│   ├── data/                    # Dados estáticos (puzzles iniciais)
-│   │   └── puzzles.ts
-│   ├── hooks/                   # Hooks customizados
-│   │   └── usePuzzles.ts
-│   ├── lib/                     # Adaptadores de infraestrutura e domínio
-│   │   ├── apiClient.ts         # Wrapper de fetch p/ chamar APIs internas
-│   │   ├── chessEngine.ts       # Integração com chess.js (applyMove)
-│   │   ├── db.ts                # Pool do node-postgres (singleton)
-│   │   ├── puzzlesResolvidos.ts # Repositório do CRUD de Puzzles Resolvidos
-│   │   ├── session.ts           # Cookie assinado HMAC-SHA256
-│   │   ├── users.ts             # Repositório do agregado usuário + jogador  
-│   │   └── validation.ts        # Validadores reutilizáveis (e-mail, senha, etc.)
-│   ├── pages/                   # Rotas (Pages Router do Next.js)
+│   │   └── ui/
+│   │       ├── ChessBoard.tsx         # Tabuleiro interativo (react-chessboard)
+│   │       └── ComentariosSection.tsx # CRUD de comentários em puzzles (UC-16..19)
+│   ├── data/
+│   │   └── puzzles.ts                 # Puzzles estáticos (fase 1 inicial)
+│   ├── hooks/
+│   │   ├── useAdmin.ts                # Guard das telas /routes/administracao
+│   │   └── usePuzzles.ts              # Seam para dados de puzzle por fase
+│   ├── lib/                           # Adaptadores de infra e domínio
+│   │   ├── admin.ts                   # Guard requireAdmin (401/403)
+│   │   ├── apiClient.ts               # Wrapper de fetch (api.get/post/patch/delete)
+│   │   ├── bots.ts                    # Repositório CRUD do bot (admin)
+│   │   ├── chessEngine.ts             # Wrapper do chess.js (applyMove)
+│   │   ├── comentarios.ts             # Repositório CRUD do comentário (Sprint 3)
+│   │   ├── db.ts                      # Pool do node-postgres (singleton)
+│   │   ├── puzzles.ts                 # Repositório CRUD do catálogo (admin)
+│   │   ├── puzzlesResolvidos.ts       # Repositório CRUD do histórico (jogador)
+│   │   ├── requestLogger.ts           # Escrita JSON-lines em logs/requests.log
+│   │   ├── session.ts                 # Cookie HMAC-SHA256
+│   │   ├── users.ts                   # Repositório do agregado usuario + jogador
+│   │   ├── validation.ts              # Validadores reutilizáveis
+│   │   └── withRequestLog.ts          # HOC que envolve cada handler de API
+│   ├── pages/
 │   │   ├── _app.tsx
-│   │   ├── index.tsx
-│   │   ├── api/                 # Endpoints HTTP do back-end
+│   │   ├── index.tsx                  # Home
+│   │   ├── api/                       # Endpoints HTTP (Pages Router)
+│   │   │   ├── _internal/
+│   │   │   │   ├── log.ts             # Sink interno do proxy de páginas
+│   │   │   │   └── test/
+│   │   │   │       └── promote-admin.ts # Helper E2E (dev-only)
+│   │   │   ├── admin/                 # CRUDs admin (Sprint 3)
+│   │   │   │   ├── bots/
+│   │   │   │   │   ├── [id].ts        # GET / PATCH / DELETE
+│   │   │   │   │   └── index.ts       # GET (list) / POST (create)
+│   │   │   │   ├── puzzles/
+│   │   │   │   │   ├── [id].ts        # GET / PATCH / DELETE
+│   │   │   │   │   └── index.ts       # GET (list) / POST (create)
+│   │   │   │   └── users.ts           # GET (list de usuários)
 │   │   │   ├── auth/
 │   │   │   │   ├── login.ts
 │   │   │   │   ├── logout.ts
 │   │   │   │   └── register.ts
+│   │   │   ├── comentarios/           # CRUD Comentários (Sprint 3)
+│   │   │   │   ├── [id].ts            # PATCH / DELETE (dono)
+│   │   │   │   └── index.ts           # GET (?puzzleId) / POST
 │   │   │   ├── puzzles/
-│   │   │   │   ├── [id].ts      # Proxy do Lichess
+│   │   │   │   ├── [id].ts            # Proxy do Lichess (aceita 'daily')
 │   │   │   │   └── solved/
-│   │   │   │       ├── [id].ts  # PATCH / DELETE
-│   │   │   │       └── index.ts # GET / POST
+│   │   │   │       ├── [id].ts        # PATCH / DELETE
+│   │   │   │       └── index.ts       # GET (list) / POST (upsert)
 │   │   │   └── users/
-│   │   │       └── me.ts        # GET / PATCH / DELETE do próprio usuário
-│   │   └── routes/              # Páginas visíveis
+│   │   │       └── me.ts              # GET / PATCH / DELETE do próprio user
+│   │   └── routes/                    # Telas (pages)
+│   │       ├── administracao/         # Painel admin (Sprint 3)
+│   │       │   ├── bots.tsx           # CRUD UI de bots
+│   │       │   ├── index.tsx          # Hub admin
+│   │       │   ├── puzzles.tsx        # CRUD UI do catálogo
+│   │       │   └── usuarios.tsx       # Lista de usuários
 │   │       ├── login.tsx
-│   │       ├── play.tsx
-│   │       ├── profile.tsx      # Tela de perfil (CRUD do usuário)
-│   │       ├── register.tsx
-│   │       └── puzzles/
-│   │           ├── [phase].tsx
-│   │           ├── history.tsx  # Tela de histórico (CRUD de puzzles resolvidos)
-│   │           └── index.tsx
-│   ├── services/                # Integração com APIs externas
-│   │   └── lichess.ts
-│   ├── styles/                  # CSS Modules + globals.css
-│   └── types/                   # Tipos compartilhados
-│       └── chess.ts
-├── tests/                       # Suíte de testes automatizados do sistema
-│   ├── integration/             # Testes de integração (cruzam fronteiras externas)
+│   │       ├── play.tsx               # Hub de modos de jogo
+│   │       ├── profile.tsx            # CRUD Usuário (UC-05..07)
+│   │       ├── puzzles/
+│   │       │   ├── [phase].tsx        # Resolver puzzle + comentários
+│   │       │   ├── history.tsx        # CRUD Puzzles Resolvidos
+│   │       │   └── index.tsx          # Lista de fases
+│   │       └── register.tsx
+│   ├── proxy.ts                       # Proxy do Next 16 (logger de páginas)
+│   ├── services/
+│   │   └── lichess.ts                 # Integração com API pública do Lichess
+│   ├── styles/                        # CSS Modules — um por tela + global
+│   │   ├── Administracao.module.css   # Estilos das 4 telas de admin
+│   │   ├── Comentarios.module.css     # Seção de comentários em puzzles
+│   │   ├── Home.module.css            # Landing page (/)
+│   │   ├── Login.module.css           # /routes/login
+│   │   ├── Play.module.css            # /routes/play
+│   │   ├── Profile.module.css         # /routes/profile
+│   │   ├── PuzzleHistory.module.css   # /routes/puzzles/history
+│   │   ├── PuzzlePhase.module.css     # /routes/puzzles/[phase]
+│   │   ├── Puzzles.module.css         # /routes/puzzles (lista)
+│   │   ├── Register.module.css        # /routes/register
+│   │   └── globals.css                # Reset + tokens globais
+│   └── types/
+│       └── chess.ts                   # Tipos compartilhados do domínio
+├── tests/                             # Suíte de testes em 3 níveis (Sprint 3)
+│   ├── setup.ts                       # Carrega .env.local e DATABASE_URL → TEST
+│   ├── unit/lib/                      # Vitest — funções puras
+│   │   ├── chessEngine.test.ts        # CT-18..20 (applyMove)
+│   │   ├── session.test.ts            # CT-21..23 (encode/decode)
+│   │   ├── users.test.ts              # CT-24..25 (hashSenha/verificarSenha)
+│   │   ├── validation.test.ts         # CT-01..16 (Sprint 2)
+│   │   └── validation.comentario.test.ts # CT-26 (texto + puzzleId)
+│   ├── integration/                   # Vitest + Postgres (CesuChess_test)
+│   │   ├── helpers/
+│   │   │   └── testDb.ts              # Pool singleton + resetDatabase + promoteToAdmin
+│   │   ├── lib/
+│   │   │   ├── comentarios.test.ts    # CT-30..31 (CRUD + ownership)
+│   │   │   ├── puzzlesAdmin.test.ts   # CT-33 + bots (admin CRUD)
+│   │   │   ├── puzzlesResolvidos.test.ts # CT-32 (upsert acumula)
+│   │   │   └── users.test.ts          # CT-27..29 (create/update/delete)
 │   │   └── services/
-│   │       └── lichess.test.ts  # Smoke test do proxy da API do Lichess
-│   └── unit/                    # Testes unitários (funções puras)
-│       └── lib/
-│           └── validation.test.ts  # Testes da camada de validação
-├── .env.local                   # (criado por você) DATABASE_URL + SESSION_SECRET — não versionado
-├── .gitignore
-├── eslint.config.mjs
-├── next.config.ts
-├── package.json
+│   │       └── lichess.test.ts        # CT-17/34 (proxy Lichess)
+│   └── e2e/                           # Playwright (browser real, banco real)
+│       ├── helpers/
+│       │   ├── auth.ts                # registrarUsuario / login / registrarELogar
+│       │   └── dbReset.ts             # truncate + promoteUserToAdmin (HTTP)
+│       ├── admin-crud.spec.ts         # CT-39..40 (puzzles + bots admin)
+│       ├── auth-flow.spec.ts          # CT-35..36 (register/login/logout)
+│       ├── comentarios-crud.spec.ts   # CT-41 (CRUD comentários)
+│       ├── profile-crud.spec.ts       # CT-37 (CRUD usuário)
+│       └── puzzles-history-crud.spec.ts # CT-38 (CRUD histórico)
+├── .env.local                         # (criado por você) DATABASE_URL + TEST_... + SESSION_SECRET — gitignored
+├── .env.local.example                 # Template do .env.local
+├── .gitignore                         # Inclui logs/, coverage/, reports/, playwright-report/, test-results/
+├── CLAUDE.md                          # Instruções de contexto pro Claude Code (IA-assistido)
+├── eslint.config.mjs                  # Config do ESLint (flat config, eslint-config-next)
+├── next-env.d.ts                      # Tipos auto-gerados do Next (não versionado)
+├── next.config.ts                     # Config do Next 16 (reactCompiler: true)
+├── package.json                       # Scripts + dependências
 ├── package-lock.json
-├── tsconfig.json
-└── README.md
+├── playwright.config.ts               # Config do Playwright (webServer + cross-env DATABASE_URL)
+├── tsconfig.json                      # TypeScript strict + alias @/*
+├── vitest.config.ts                   # Config do Vitest (coverage thresholds, fileParallelism)
+└── README.md                          # Este arquivo
 ```
 
 ### Detalhamento das pastas principais
@@ -489,31 +560,13 @@ Desenvolvimento-Plataforma-Web/
 | Pasta | Responsabilidade |
 |---|---|
 | **`DB/`** | Modelagem visual (BRModeler) e script `schema.sql` aplicado no Postgres. |
-| **`src/components/ui`** | Componentes de interface reutilizáveis (tabuleiro, botões). |
-| **`src/data`** | Dados estáticos / mocks (será reduzido conforme as fontes reais são plugadas). |
-| **`src/hooks`** | Hooks customizados encapsulando lógica reutilizável. |
-| **`src/lib`** | Camada de infraestrutura e domínio: pool do banco, sessão, hash, validações, repositórios e wrapper de fetch. |
-| **`src/pages`** | Rotas da aplicação (Pages Router). Arquivos em `pages/api/` viram endpoints HTTP; arquivos em `pages/routes/` viram telas. |
-| **`src/services`** | Camada de integração com serviços externos (atualmente: Lichess). |
+| **`Docs/`** | Documentação técnica versionada: casos de uso, casos de teste, mapa de API, regras de negócio FIDE. |
+| **`src/components/ui`** | Componentes de UI reutilizáveis (tabuleiro, seção de comentários). |
+| **`src/data`** | Dados estáticos (stub de puzzles iniciais; será reduzido conforme dados reais entram). |
+| **`src/hooks`** | Hooks customizados (`useAdmin` guard, `usePuzzles` seam). |
+| **`src/lib`** | Camada de infraestrutura e domínio: pool do banco, sessão, hash, validações, repositórios, wrapper de fetch, logger de requisições. |
+| **`src/pages`** | Rotas (Pages Router). `pages/api/` vira endpoint HTTP; `pages/routes/` vira tela. |
+| **`src/services`** | Camada de integração com serviços externos (Lichess). |
 | **`src/styles`** | `globals.css` + um `*.module.css` por tela. |
 | **`src/types`** | Tipos TypeScript compartilhados. |
-| **`tests/`** | Toda a suíte de testes (Vitest). Subdividida em `tests/unit/` (funções puras) e `tests/integration/` (serviços externos, banco, proxies); ambas espelham a árvore de `src/`. |
-
----
-
-## 🏗 Arquitetura e Padrões
-
-- **Separação de responsabilidades:** a lógica de xadrez (regras, estado, validação) é encapsulada em `lib/`, `hooks/` e na biblioteca `chess.js`; os componentes em `components/ui` cuidam apenas da apresentação e interação.
-- **Componentes funcionais com Hooks:** todo o estado é gerenciado com `useState`, `useEffect` e hooks customizados centralizados em `hooks/`.
-- **Tipagem estrita:** o `tsconfig.json` está configurado para máxima segurança (`strict: true`), com todos os tipos compartilhados centralizados em `types/`.
-- **Camada de persistência:** o acesso ao PostgreSQL é feito via `node-postgres` com SQL puro — o pool de conexões vive em `lib/` e as queries ficam em `lib/` (repositórios), mantendo a separação entre infraestrutura e regras de negócio.
-- **Lint contínuo:** o ESLint é executado durante o desenvolvimento e antes dos commits para manter a base de código consistente.
-- **React Compiler:** com o `babel-plugin-react-compiler` ativo, otimizações como memoização automática são aplicadas em tempo de build, simplificando o código de aplicação.
-
----
-
-<div align="center">
-
-Feito com ♟️ e ☕ para a disciplina de Qualidade e Projeto de Software.
-
-</div>
+| **`tests/`** | Suíte completa em 3 níveis. `unit/` para funções puras (Vitest), `integration/`

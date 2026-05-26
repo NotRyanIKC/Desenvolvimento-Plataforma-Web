@@ -1,7 +1,7 @@
 /**
  * tests/integration/helpers/testDb.ts
  *
- * Helpers para os testes de integração contra o banco BancoVersao2034_test.
+ * Helpers para os testes de integração contra o banco CesuChess_test.
  *
  * NOTA: o `testPool` é um SINGLETON compartilhado entre suites.
  * `closeTestPool()` é uma no-op intencional — fechar o pool no afterAll
@@ -9,8 +9,8 @@
  *
  * Pré-requisito: criar o banco de teste e aplicar o schema:
  *
- *   createdb -U postgres BancoVersao2034_test
- *   psql -U postgres -d BancoVersao2034_test -f DB/schema.sql
+ *   createdb -U postgres CesuChess_test
+ *   psql -U postgres -d CesuChess_test -f DB/schema.sql
  */
 import { Pool } from 'pg';
 

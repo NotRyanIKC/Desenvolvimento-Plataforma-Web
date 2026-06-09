@@ -1,5 +1,5 @@
 -- ============================================================
--- CesuChess — schema UNIFICADO do Sprint 2
+-- CesuChess — schema UNIFICADO v0.2.0
 --
 -- Contém o modelo conceitual completo (9 tabelas + 3 enums)
 -- vindo do BRModeler, com todas as correções aplicadas,
@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS progresso_puzzle   CASCADE;
 DROP TABLE IF EXISTS lance              CASCADE;
 DROP TABLE IF EXISTS partida            CASCADE;
 DROP TABLE IF EXISTS puzzle             CASCADE;
+DROP TABLE IF EXISTS tema               CASCADE;
 DROP TABLE IF EXISTS bot                CASCADE;
 DROP TABLE IF EXISTS jogador            CASCADE;
 DROP TABLE IF EXISTS admin              CASCADE;
@@ -91,14 +92,29 @@ CREATE TABLE jogador (
 -- BOT
 -- ------------------------------------------------------------
 CREATE TABLE bot (
-    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    criado_por_id      UUID NOT NULL REFERENCES admin(id) ON DELETE RESTRICT,
-    nome               VARCHAR(60)    NOT NULL,
-    nivel_dificuldade  dificuldade_bot NOT NULL,
-    descricao          TEXT,
-    ativo              BOOLEAN        NOT NULL DEFAULT TRUE,
-    criado_em          TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
+    id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    criado_por_id         UUID NOT NULL REFERENCES admin(id) ON DELETE RESTRICT,
+    nome                  VARCHAR(60)    NOT NULL,
+    nivel_dificuldade     dificuldade_bot NOT NULL,
+    descricao             TEXT,
+    parametros_estrategia JSONB          NOT NULL DEFAULT '{}'::JSONB,
+    ativo                 BOOLEAN        NOT NULL DEFAULT TRUE,
+    criado_em             TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_bot_nome UNIQUE (nome)
+);
+
+-- ------------------------------------------------------------
+-- TEMA
+-- ------------------------------------------------------------
+CREATE TABLE tema (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    criado_por_id  UUID NOT NULL REFERENCES admin(id) ON DELETE RESTRICT,
+    nome           VARCHAR(60)  NOT NULL,
+    descricao      TEXT,
+    ativo          BOOLEAN      NOT NULL DEFAULT TRUE,
+    criado_em      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    atualizado_em  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_tema_nome UNIQUE (nome)
 );
 
 -- ------------------------------------------------------------
@@ -263,4 +279,8 @@ CREATE TRIGGER trg_puzzles_resolvidos_atualizado_em
 
 CREATE TRIGGER trg_comentario_atualizado_em
     BEFORE UPDATE ON comentario
+    FOR EACH ROW EXECUTE FUNCTION set_atualizado_em();
+
+CREATE TRIGGER trg_tema_atualizado_em
+    BEFORE UPDATE ON tema
     FOR EACH ROW EXECUTE FUNCTION set_atualizado_em();

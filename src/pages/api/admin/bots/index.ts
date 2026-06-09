@@ -19,6 +19,7 @@ import {
   firstError,
   validateBotNome,
   validateNivelDificuldade,
+  validateParametrosEstrategia,
 } from '@/lib/validation';
 import { withRequestLog } from '@/lib/withRequestLog';
 
@@ -39,11 +40,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   if (req.method === 'POST') {
-    const { nome, nivelDificuldade, descricao } = req.body ?? {};
+    const { nome, nivelDificuldade, descricao, parametrosEstrategia, ativo } = req.body ?? {};
 
     const erro = firstError(
       validateBotNome(nome),
-      validateNivelDificuldade(nivelDificuldade)
+      validateNivelDificuldade(nivelDificuldade),
+      validateParametrosEstrategia(parametrosEstrategia),
+      ativo !== undefined && typeof ativo !== 'boolean' ? 'ativo deve ser booleano.' : null
     );
     if (erro) return res.status(400).json({ error: erro });
 
@@ -61,6 +64,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           nome,
           nivelDificuldade: nivelDificuldade as NivelDificuldade,
           descricao: descricao ?? null,
+          parametrosEstrategia: parametrosEstrategia ?? {},
+          ativo: ativo ?? true,
         },
         auth.adminId
       );

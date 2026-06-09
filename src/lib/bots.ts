@@ -1,15 +1,8 @@
-/**
- * src/lib/bots.ts
- *
- * Acesso à tabela `bot`. Cada bot é criado por um admin (criado_por_id
- * referencia admin(id)) e tem um nível de dificuldade do enum
- * `dificuldade_bot` ('facil' | 'medio' | 'dificil'). O nome é único.
- */
-
 import { query } from './db';
 
 export const NIVEIS_DIFICULDADE = ['facil', 'medio', 'dificil'] as const;
 export type NivelDificuldade = (typeof NIVEIS_DIFICULDADE)[number];
+export type ParametrosEstrategia = Record<string, string | number | boolean>;
 
 export interface BotRow {
   id: string;
@@ -17,6 +10,7 @@ export interface BotRow {
   nome: string;
   nivel_dificuldade: NivelDificuldade;
   descricao: string | null;
+  parametros_estrategia: ParametrosEstrategia;
   ativo: boolean;
   criado_em: Date;
 }
@@ -26,6 +20,7 @@ export interface BotDTO {
   nome: string;
   nivelDificuldade: NivelDificuldade;
   descricao: string | null;
+  parametrosEstrategia: ParametrosEstrategia;
   ativo: boolean;
   criadoEm: string;
 }
@@ -36,6 +31,7 @@ export function toBotDTO(row: BotRow): BotDTO {
     nome: row.nome,
     nivelDificuldade: row.nivel_dificuldade,
     descricao: row.descricao,
+    parametrosEstrategia: row.parametros_estrategia ?? {},
     ativo: row.ativo,
     criadoEm: row.criado_em.toISOString(),
   };
@@ -45,29 +41,41 @@ export interface CreateBotInput {
   nome: string;
   nivelDificuldade: NivelDificuldade;
   descricao?: string | null;
+  parametrosEstrategia?: ParametrosEstrategia;
+  ativo?: boolean;
 }
 
-/**
- * Cria um bot. Lança o erro 23505 do Postgres se o nome já existir
- * (constraint uq_bot_nome) — tratado na rota como 409.
- */
 export async function createBot(
   input: CreateBotInput,
   adminId: string
 ): Promise<BotRow> {
   const { rows } = await query<BotRow>(
-    `INSERT INTO bot (criado_por_id, nome, nivel_dificuldade, descricao)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO bot
+       (criado_por_id, nome, nivel_dificuldade, descricao, parametros_estrategia, ativo)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
-    [adminId, input.nome.trim(), input.nivelDificuldade, input.descricao ?? null]
+    [
+      adminId,
+      input.nome.trim(),
+      input.nivelDificuldade,
+      input.descricao?.trim() || null,
+      input.parametrosEstrategia ?? {},
+      input.ativo ?? true,
+    ]
   );
   return rows[0];
 }
 
-/** Lista todos os bots (mais recentes primeiro). */
 export async function listAllBots(): Promise<BotRow[]> {
   const { rows } = await query<BotRow>(
     'SELECT * FROM bot ORDER BY criado_em DESC'
+  );
+  return rows;
+}
+
+export async function listActiveBots(): Promise<BotRow[]> {
+  const { rows } = await query<BotRow>(
+    'SELECT * FROM bot WHERE ativo = TRUE ORDER BY nivel_dificuldade, nome'
   );
   return rows;
 }
@@ -81,6 +89,7 @@ export interface UpdateBotInput {
   nome?: string;
   nivelDificuldade?: NivelDificuldade;
   descricao?: string | null;
+  parametrosEstrategia?: ParametrosEstrategia;
   ativo?: boolean;
 }
 
@@ -102,7 +111,11 @@ export async function updateBot(
   }
   if (input.descricao !== undefined) {
     sets.push(`descricao = $${idx++}`);
-    params.push(input.descricao);
+    params.push(input.descricao?.trim() || null);
+  }
+  if (input.parametrosEstrategia !== undefined) {
+    sets.push(`parametros_estrategia = $${idx++}`);
+    params.push(input.parametrosEstrategia);
   }
   if (input.ativo !== undefined) {
     sets.push(`ativo = $${idx++}`);

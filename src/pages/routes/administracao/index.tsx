@@ -2,8 +2,8 @@
  * Administração — hub do modo admin.
  *
  * Protegida por useAdmin: usuário sem sessão vai para /routes/login e usuário
- * logado sem ser admin vai para /routes/profile. Lista as três opções:
- * Listar Usuários, Criar Puzzles e Criar Bots.
+ * logado sem ser admin vai para /routes/profile. Lista as quatro opções:
+ * Listar Usuários, Gerenciar Puzzles, Gerenciar Bots e Gerenciar Temas.
  */
 
 import React from 'react';
@@ -70,7 +70,7 @@ export default function Administracao() {
 
           <Link href="/routes/administracao/puzzles" className={styles.cardLink}>
             <span className={styles.cardLinkIcon}>🧩</span>
-            <h2 className={styles.cardLinkTitle}>Criar Puzzles</h2>
+            <h2 className={styles.cardLinkTitle}>Gerenciar Puzzles</h2>
             <p className={styles.cardLinkSub}>
               Adicione um novo puzzle ao catálogo da plataforma.
             </p>
@@ -78,9 +78,17 @@ export default function Administracao() {
 
           <Link href="/routes/administracao/bots" className={styles.cardLink}>
             <span className={styles.cardLinkIcon}>🤖</span>
-            <h2 className={styles.cardLinkTitle}>Criar Bots</h2>
+            <h2 className={styles.cardLinkTitle}>Gerenciar Bots</h2>
             <p className={styles.cardLinkSub}>
               Cadastre um bot com nível de dificuldade.
+            </p>
+          </Link>
+
+          <Link href="/routes/administracao/temas" className={styles.cardLink}>
+            <span className={styles.cardLinkIcon}>🏷</span>
+            <h2 className={styles.cardLinkTitle}>Gerenciar Temas</h2>
+            <p className={styles.cardLinkSub}>
+              Organize as classificações táticas dos puzzles.
             </p>
           </Link>
         </div>

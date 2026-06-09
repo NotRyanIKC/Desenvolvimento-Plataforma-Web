@@ -5,7 +5,7 @@
  * UC-26 Editar bot, UC-27 Excluir bot.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import styles from '@/styles/Administracao.module.css';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -18,6 +18,7 @@ interface BotDTO {
   nome: string;
   nivelDificuldade: Nivel;
   descricao: string | null;
+  parametrosEstrategia: Record<string, string | number | boolean>;
   ativo: boolean;
   criadoEm: string;
 }
@@ -38,6 +39,9 @@ export default function AdminBots() {
   const [cNome, setCNome] = useState('');
   const [cNivel, setCNivel] = useState<Nivel>('facil');
   const [cDescricao, setCDescricao] = useState('');
+  const [cAgressividade, setCAgressividade] = useState(50);
+  const [cAtivo, setCAtivo] = useState(true);
+  const [busca, setBusca] = useState('');
   const [criarErr, setCriarErr] = useState<string | null>(null);
   const [criarOk, setCriarOk] = useState<string | null>(null);
   const [salvandoCriar, setSalvandoCriar] = useState(false);
@@ -46,6 +50,7 @@ export default function AdminBots() {
   const [eNome, setENome] = useState('');
   const [eNivel, setENivel] = useState<Nivel>('facil');
   const [eDescricao, setEDescricao] = useState('');
+  const [eAgressividade, setEAgressividade] = useState(50);
   const [eAtivo, setEAtivo] = useState(true);
   const [editErr, setEditErr] = useState<string | null>(null);
   const [salvandoEdit, setSalvandoEdit] = useState(false);
@@ -68,6 +73,12 @@ export default function AdminBots() {
     if (!carregando && user) carregarLista();
   }, [carregando, user]);
 
+  const botsFiltrados = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+    if (!termo) return bots;
+    return bots.filter((bot) => `${bot.nome} ${bot.descricao ?? ''} ${bot.nivelDificuldade}`.toLowerCase().includes(termo));
+  }, [bots, busca]);
+
   async function criarBot(e: React.FormEvent) {
     e.preventDefault();
     setCriarErr(null);
@@ -84,10 +95,14 @@ export default function AdminBots() {
         nome: cNome.trim(),
         nivelDificuldade: cNivel,
         descricao: cDescricao.trim() || null,
+        parametrosEstrategia: { agressividade: cAgressividade },
+        ativo: cAtivo,
       });
       setCriarOk('Bot criado com sucesso.');
       setCNome('');
       setCDescricao('');
+      setCAgressividade(50);
+      setCAtivo(true);
       setCNivel('facil');
       carregarLista();
     } catch (err) {
@@ -102,6 +117,7 @@ export default function AdminBots() {
     setENome(b.nome);
     setENivel(b.nivelDificuldade);
     setEDescricao(b.descricao ?? '');
+    setEAgressividade(Number(b.parametrosEstrategia.agressividade ?? 50));
     setEAtivo(b.ativo);
     setEditErr(null);
   }
@@ -126,6 +142,7 @@ export default function AdminBots() {
         nome: eNome.trim(),
         nivelDificuldade: eNivel,
         descricao: eDescricao.trim() || null,
+        parametrosEstrategia: { agressividade: eAgressividade },
         ativo: eAtivo,
       });
       fecharEditor();
@@ -213,6 +230,15 @@ export default function AdminBots() {
               disabled={salvandoCriar} />
           </div>
 
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="cAgressividade">Agressividade: {cAgressividade}</label>
+            <input id="cAgressividade" type="range" min="0" max="100" value={cAgressividade} onChange={(e) => setCAgressividade(Number(e.target.value))} disabled={salvandoCriar} />
+          </div>
+
+          <label className={styles.label}>
+            <input type="checkbox" checked={cAtivo} onChange={(e) => setCAtivo(e.target.checked)} disabled={salvandoCriar} /> Ativo
+          </label>
+
           <div className={styles.actions}>
             <button type="submit" className={styles.btnPrimary} disabled={salvandoCriar}>
               {salvandoCriar ? 'Salvando…' : 'Criar bot'}
@@ -229,11 +255,16 @@ export default function AdminBots() {
             {bots.length} bot{bots.length === 1 ? '' : 's'} no total.
           </p>
 
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="buscaBot">Pesquisar</label>
+            <input id="buscaBot" className={styles.input} value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome, descrição ou nível" />
+          </div>
+
           {listaLoading ? (
             <div className={styles.loading}>Carregando…</div>
           ) : erroLista ? (
             <p className={styles.msgErr}>{erroLista}</p>
-          ) : bots.length === 0 ? (
+          ) : botsFiltrados.length === 0 ? (
             <p className={styles.empty}>Nenhum bot cadastrado ainda.</p>
           ) : (
             <div className={styles.tableWrap}>
@@ -243,16 +274,18 @@ export default function AdminBots() {
                     <th>Nome</th>
                     <th>Nível</th>
                     <th>Descrição</th>
+                    <th>Agressividade</th>
                     <th>Ativo</th>
                     <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {bots.map((b) => (
+                  {botsFiltrados.map((b) => (
                     <tr key={b.id}>
                       <td>{b.nome}</td>
                       <td>{LABEL_NIVEL[b.nivelDificuldade]}</td>
                       <td>{b.descricao ?? '—'}</td>
+                      <td>{String(b.parametrosEstrategia.agressividade ?? 50)}</td>
                       <td>
                         <span className={b.ativo ? `${styles.pill} ${styles.pillOn}` : `${styles.pill} ${styles.pillOff}`}>
                           {b.ativo ? 'sim' : 'não'}
@@ -303,6 +336,11 @@ export default function AdminBots() {
                   value={eDescricao}
                   onChange={(e) => setEDescricao(e.target.value)}
                   disabled={salvandoEdit} />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>Agressividade: {eAgressividade}</label>
+                <input type="range" min="0" max="100" value={eAgressividade} onChange={(e) => setEAgressividade(Number(e.target.value))} disabled={salvandoEdit} />
               </div>
 
               <div className={styles.field}>

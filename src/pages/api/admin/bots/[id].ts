@@ -18,6 +18,7 @@ import {
 import {
   validateBotNome,
   validateNivelDificuldade,
+  validateParametrosEstrategia,
 } from '@/lib/validation';
 import { withRequestLog } from '@/lib/withRequestLog';
 
@@ -47,7 +48,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   if (req.method === 'PATCH') {
-    const { nome, nivelDificuldade, descricao, ativo } = req.body ?? {};
+    const { nome, nivelDificuldade, descricao, parametrosEstrategia, ativo } = req.body ?? {};
     const input: UpdateBotInput = {};
 
     if (nome !== undefined) {
@@ -65,6 +66,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         return res.status(400).json({ error: 'descricao inválida.' });
       }
       input.descricao = descricao;
+    }
+    if (parametrosEstrategia !== undefined) {
+      const e = validateParametrosEstrategia(parametrosEstrategia);
+      if (e) return res.status(400).json({ error: e });
+      input.parametrosEstrategia = parametrosEstrategia;
     }
     if (ativo !== undefined) {
       if (typeof ativo !== 'boolean') {

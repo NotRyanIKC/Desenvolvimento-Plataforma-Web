@@ -101,6 +101,39 @@ export function validateNivelDificuldade(nivel: unknown): string | null {
   return null;
 }
 
+export function validateParametrosEstrategia(parametros: unknown): string | null {
+  if (parametros === undefined) return null;
+  if (!parametros || typeof parametros !== 'object' || Array.isArray(parametros))
+    return 'Parâmetros de estratégia devem ser um objeto JSON.';
+  const entries = Object.entries(parametros);
+  if (entries.length > 20) return 'Parâmetros de estratégia excedem o limite de 20 itens.';
+  if (
+    !entries.every(
+      ([chave, valor]) =>
+        chave.trim().length > 0 &&
+        chave.length <= 40 &&
+        (typeof valor === 'string' || typeof valor === 'number' || typeof valor === 'boolean')
+    )
+  )
+    return 'Cada parâmetro deve ter chave válida e valor textual, numérico ou booleano.';
+  return null;
+}
+
+export function validateTemaNome(nome: unknown): string | null {
+  if (typeof nome !== 'string') return 'Nome do tema inválido.';
+  const trimmed = nome.trim();
+  if (trimmed.length < 2) return 'Nome do tema deve ter no mínimo 2 caracteres.';
+  if (trimmed.length > 60) return 'Nome do tema deve ter no máximo 60 caracteres.';
+  return null;
+}
+
+export function validateTemaDescricao(descricao: unknown): string | null {
+  if (descricao === null || descricao === undefined) return null;
+  if (typeof descricao !== 'string') return 'Descrição do tema inválida.';
+  if (descricao.trim().length > 500) return 'Descrição do tema deve ter no máximo 500 caracteres.';
+  return null;
+}
+
 /* ─── Validação de Comentários (UC-16, UC-18) ────────────── */
 
 const COMENTARIO_MIN = 1;

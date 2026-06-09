@@ -6,7 +6,7 @@ import { resetDb, closePool } from './helpers/dbReset';
 import { registrarELogar } from './helpers/auth';
 
 test.describe('🎭 E2E — CRUD Comentários em Puzzle', () => {
-  test.beforeAll(async () => { await resetDb(); });
+  test.beforeEach(async () => { await resetDb(); });
   test.afterAll(async () => { await closePool(); });
 
   test('Usuário publica, vê, edita e exclui um comentário', async ({ page }) => {

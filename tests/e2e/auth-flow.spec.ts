@@ -6,7 +6,7 @@ import { resetDb, closePool } from './helpers/dbReset';
 import { registrarUsuario, login, userFactory } from './helpers/auth';
 
 test.describe('🎭 E2E — Autenticação (UC-01..03)', () => {
-  test.beforeAll(async () => { await resetDb(); });
+  test.beforeEach(async () => { await resetDb(); });
   test.afterAll(async () => { await closePool(); });
 
   test('Visitante consegue criar conta, fazer logout, logar de volta', async ({ page }) => {

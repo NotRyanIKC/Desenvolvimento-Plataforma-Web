@@ -1,9 +1,8 @@
 /**
- * Testes de integração — repositórios admin (Puzzle e Bot).
+ * Testes de integração — CRUD administrativo de puzzles (UC-20..23).
  */
 import { describe, test, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import * as puzzlesLib from '../../../src/lib/puzzles';
-import * as botsLib from '../../../src/lib/bots';
 import * as usersLib from '../../../src/lib/users';
 import {
   closeTestPool, hasTestDb, promoteToAdmin, resetDatabase, testPool,
@@ -123,62 +122,6 @@ describe.skipIf(!hasTestDb)('🔄 Integração — CRUD admin: Puzzle (lib/puzzl
       puzzlesLib.createPuzzle({
         fen: '8/k7/8/8/8/8/7K/8 w - - 0 2', solucao: ['a1a3'], fase: 1, lichessId: 'dup',
       }, adminId)
-    ).rejects.toMatchObject({ code: '23505' });
-  });
-});
-
-describe.skipIf(!hasTestDb)('🔄 Integração — CRUD admin: Bot (lib/bots)', () => {
-  beforeAll(async () => { if (testPool) await resetDatabase(); });
-  beforeEach(async () => { if (testPool) await resetDatabase(); });
-  afterAll(async () => { await closeTestPool(); });
-
-  test('createBot insere com defaults aplicados', async () => {
-    const { adminId } = await criarAdmin();
-    const row = await botsLib.createBot({
-      nome: 'Maia 1', nivelDificuldade: 'facil',
-    }, adminId);
-    expect(row.nivel_dificuldade).toBe('facil');
-    expect(row.ativo).toBe(true);
-  });
-
-  test('listAllBots devolve em ordem decrescente', async () => {
-    const { adminId } = await criarAdmin();
-    await botsLib.createBot({ nome: 'A', nivelDificuldade: 'facil' }, adminId);
-    await botsLib.createBot({ nome: 'B', nivelDificuldade: 'medio' }, adminId);
-    const lista = await botsLib.listAllBots();
-    expect(lista).toHaveLength(2);
-    expect(lista[0].nome).toBe('B');
-  });
-
-  test('updateBot altera nivel e descricao', async () => {
-    const { adminId } = await criarAdmin();
-    const row = await botsLib.createBot({
-      nome: 'Edit Bot', nivelDificuldade: 'facil', descricao: 'antes',
-    }, adminId);
-    const upd = await botsLib.updateBot(row.id, {
-      nivelDificuldade: 'dificil',
-      descricao: 'depois',
-      ativo: false,
-    });
-    expect(upd?.nivel_dificuldade).toBe('dificil');
-    expect(upd?.descricao).toBe('depois');
-    expect(upd?.ativo).toBe(false);
-  });
-
-  test('deleteBot remove a linha', async () => {
-    const { adminId } = await criarAdmin();
-    const row = await botsLib.createBot({
-      nome: 'Del Bot', nivelDificuldade: 'medio',
-    }, adminId);
-    expect(await botsLib.deleteBot(row.id)).toBe(true);
-    expect(await botsLib.findBotById(row.id)).toBeNull();
-  });
-
-  test('nome UNIQUE dispara 23505', async () => {
-    const { adminId } = await criarAdmin();
-    await botsLib.createBot({ nome: 'Único', nivelDificuldade: 'facil' }, adminId);
-    await expect(
-      botsLib.createBot({ nome: 'Único', nivelDificuldade: 'medio' }, adminId)
     ).rejects.toMatchObject({ code: '23505' });
   });
 });

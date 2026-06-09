@@ -1,23 +1,21 @@
 /**
- * tests/setup.ts
- *
- * Roda ANTES de qualquer teste — carrega o .env.local e redireciona
- * DATABASE_URL → TEST_DATABASE_URL para que o pool singleton de
- * src/lib/db.ts já nasça apontando pro banco de TESTE.
+ * Carrega a configuração local de testes antes de qualquer import de src/lib/db.ts.
+ * Quando TEST_DATABASE_URL existe, todo acesso do Vitest ao PostgreSQL é redirecionado
+ * para o banco isolado de testes. Testes unitários mockados continuam funcionando sem DB.
  */
-import { config } from 'dotenv';
-import path from 'node:path';
+import {
+  getOptionalTestDatabaseUrl,
+  getTestSessionSecret,
+  loadTestEnvironment,
+} from './helpers/testEnvironment';
 
-config({ path: path.resolve(__dirname, '..', '.env.local') });
+loadTestEnvironment();
+process.env.SESSION_SECRET = getTestSessionSecret();
 
-// Default seguro para CI / quando .env.local não tem TEST_DATABASE_URL
-if (!process.env.SESSION_SECRET) {
-  process.env.SESSION_SECRET =
-    'chave-de-teste-vitest-com-tamanho-suficiente-32-chars';
-}
-
-// Aponta o pool de produção pro banco de teste durante a suíte.
-// Tem que acontecer ANTES de qualquer import de src/lib/db.ts.
-if (process.env.TEST_DATABASE_URL) {
-  process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+const testDatabaseUrl = getOptionalTestDatabaseUrl();
+if (testDatabaseUrl) {
+  process.env.DATABASE_URL = testDatabaseUrl;
+} else if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL =
+    'postgres://postgres:postgres@127.0.0.1:5432/cesuchess_unit_test_placeholder';
 }

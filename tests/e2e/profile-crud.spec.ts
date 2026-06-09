@@ -7,7 +7,7 @@ import { resetDb, closePool } from './helpers/dbReset';
 import { registrarELogar } from './helpers/auth';
 
 test.describe('🎭 E2E — CRUD Usuário (Perfil)', () => {
-  test.beforeAll(async () => { await resetDb(); });
+  test.beforeEach(async () => { await resetDb(); });
   test.afterAll(async () => { await closePool(); });
 
   test('Usuário consegue ler, editar nome e excluir a conta', async ({ page }) => {

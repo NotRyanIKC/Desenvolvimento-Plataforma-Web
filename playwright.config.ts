@@ -1,20 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
+import {
+  getTestSessionSecret,
+  loadTestEnvironment,
+  requireTestDatabaseUrl,
+} from './tests/helpers/testEnvironment';
 
-/**
- * Configuração do Playwright para testes E2E.
- *
- * IMPORTANTE: usamos cross-env no `command` pra setar DATABASE_URL ANTES
- * do Next inicializar. Sem isso, o Next carrega .env.local (que aponta
- * pro banco DEV) e o `env` daqui é ignorado.
- *
- * Pré-requisito (uma vez):
- *   createdb -U postgres CesuChess_test
- *   psql -U postgres -d CesuChess_test -f DB/schema.sql
- *   npx playwright install
- */
-const TEST_DB_URL =
-  process.env.TEST_DATABASE_URL ??
-  'postgres://postgres:201005@localhost:5432/CesuChess_test';
+loadTestEnvironment();
+const TEST_DB_URL = requireTestDatabaseUrl();
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -39,9 +31,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npx cross-env DATABASE_URL=${TEST_DB_URL} npm run dev -- -p 3001`,
+    command: 'npm run dev -- -p 3001',
     url: 'http://localhost:3001',
     reuseExistingServer: false,
     timeout: 120000,
+    env: {
+      DATABASE_URL: TEST_DB_URL,
+      SESSION_SECRET: getTestSessionSecret(),
+    },
   },
 });

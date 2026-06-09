@@ -14,8 +14,8 @@ const MODES = [
     icon: '🤖',
     title: 'Jogar contra o Bot',
     desc: 'Treine contra o computador em diferentes níveis de dificuldade.',
-    disabled: true,
-    href: null,
+    disabled: false,
+    href: '/routes/play/bot',
   },
 ];
 
@@ -73,6 +73,15 @@ export default function Play() {
               </Link>
             )
           )}
+        </div>
+
+        <div className={styles.divider} />
+
+        <div className={styles.hint}>
+          <p>As partidas concluídas ou abandonadas ficam registradas neste navegador.</p>
+          <Link href="/routes/play/history" className={styles.btnHint}>
+            Ver Histórico →
+          </Link>
         </div>
 
         <div className={styles.divider} />
